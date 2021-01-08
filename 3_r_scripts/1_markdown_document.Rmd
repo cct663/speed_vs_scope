@@ -12,11 +12,6 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(knitr)
-library(dplyr)
-library(ggplot2)
-library(here)
-library(sjPlot)
 ```
 
 
