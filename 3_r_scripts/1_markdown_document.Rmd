@@ -89,6 +89,18 @@ Here I'm plotting the initial slope vs the elapsed time before each bird reached
 
 **Figure x.** Log scale
 
+## Time to Max vs. Max
+
+Here I'm plotting the max cort value reached vs. the time that individuals reached that value. Do individuals with the fastest cort responses also reach higher levels of circulating cort?
+
+![](time95_vs_max.png)\
+
+**Figure x.** 
+
+![](time95_vs_maxl.png)\
+
+**Figure x.**
+
 ## RWBL Conclusions
 
 There are probably some different things we could do with the data above, but I think we can make some general conclusions relevant to the speed vs. scope question.  
@@ -97,6 +109,7 @@ There are probably some different things we could do with the data above, but I 
 + Within a life history stage, there is variation within individuals in both the speed and scope of the cort response, and it isn't clear that one of these aspects is substantially more or less variable than the other.  
 + Pooling across contexts, the initial slope and maximal value of corticosterone are correlated, but the relationship is quite weak within each separate life stage, suggesting that the two can vary somewhat independently.  
 + There is little evidence that initial slope is directly related to time to achieving 95% of the maximal value, but the time series here does not capture the downward return to base cort and there was relatively little variation in the time required to reach 95%, so this may not be surprising. It may be better to look at the time to reach 70%, since that seems to be the part of the curve where individuals and stages differ most from each other.  
++ The time taken to reach maximal cort is related to the absolute value of max cort, but the relationship is positive. That means that birds that take longer to reach their max level also reach higher levels, presumably because they continue increasing for longer. That is really a problem for disentangling measure of speed and scope with time point measures.  
 + Measuring only at 30 minutes misses a lot of these features of the cort response.  
 
 # Simulation
@@ -114,7 +127,16 @@ Using this simulation, we can explore a lot of different scenarios and ask how c
 
 ## Demonstration
 
-  
+This is a demonstration of the output and plotting function for the simulation using all the default settings. I've been playing with what makes sense as defaults, but currently this is set such that:  
+
++ Base cort is 
+
+![](demo.png)\
+
+In the default plot the three panels show  
+1) The simulated dataset that is reduced to the defined sampling time points (2, 15, 30).  
+2) The full time series dataset. This is fit with a loess curve from the 'true' values sampled with error. The 'wiggliness' can be adjusted.  
+3) The rank profile of each animal over the time series.  
 
 
 ## Speed vs. Scope
