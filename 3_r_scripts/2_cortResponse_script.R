@@ -19,7 +19,7 @@
                                base_mu = 5, base_sd = 1.5, base_min = 0.5,
                                speed_mu = 30, speed_sd = 5, speed_min = 10,
                                max_mu = log(50), max_sd = log(1.2), 
-                               maxtime_mu = 10, maxtime_sd = 3, maxtime_min = 4,
+                               maxtime_mu = 15, maxtime_sd = 3, maxtime_min = 5,
                                return_mu = 90, return_sd = 15, 
                                cor_base_speed = 0, cor_base_max = 0, cor_base_maxtime = 0, cor_base_return = 0,
                                cor_speed_max = 0, cor_speed_maxtime = 0, cor_speed_return = 0,
@@ -97,7 +97,7 @@
                                 sample_times = 1,
                                 timecourse_max = 170,
                                 performance_contributions = c(0, 0, 0, 0, 0, 1),
-                                sm_span = .6) #relative contribution of base, speed, max, maxtime, return, and error to performance
+                                sm_span = .2) #relative contribution of base, speed, max, maxtime, return, and error to performance
               {
             data2 <- data[rep(seq_len(nrow(data)), sample_times), ]
             data2$sample <- rep(seq(1, sample_times, 1), each = nrow(data))
@@ -143,18 +143,62 @@
                         mean = 0,
                         sd = return_error * data2[which(data2$group == "return"), "x"])
              
-            
-            time_seq <- data.frame(time = seq(0, timecourse_max, 1))
-            preds <- as.data.frame(matrix(nrow = length(unique(data2$animal_sample)), ncol = nrow(time_seq)))
-            colnames(preds) <- time_seq$time
-            rownames(preds) <- unique(data2$animal_sample)
-            for(i in 1:length(unique(data2$animal_sample))){
-              temp <- subset(data2, data2$animal_sample == unique(data2$animal_sample)[i])
-              suppressWarnings(
-                fits <- predict(loess(temp$y ~ temp$x, span = sm_span), newdata = time_seq$time)
-              )
-              preds[i, ] <- fits
-            }
+            # Extend a time sequence every minute and make a loess fit to save each predicted value
+                time_seq <- data.frame(time = seq(0, timecourse_max, 1))
+                preds <- as.data.frame(matrix(nrow = length(unique(data2$animal_sample)), ncol = nrow(time_seq)))
+                colnames(preds) <- time_seq$time
+                rownames(preds) <- unique(data2$animal_sample)
+                #for(i in 1:length(unique(data2$animal_sample))){
+                #  temp <- subset(data2, data2$animal_sample == unique(data2$animal_sample)[i])
+                #  suppressWarnings(
+                #    fits <- predict(loess(temp$y ~ temp$x, span = sm_span), newdata = time_seq$time)
+                #  )
+                #  preds[i, ] <- fits
+                #}
+                
+            # Alternate time sequence. Adds filler points every 5 minutes to make loess fit smoother.
+                tseq <- data.frame(time = seq(0, timecourse_max, 5), y = NA)
+                preds2 <- as.data.frame(matrix(nrow = length(unique(data2$animal_sample)), ncol = nrow(tseq)))
+                colnames(preds2) <- tseq$time
+                rownames(preds2) <- unique(data2$animal_sample)
+                for(i in 1:length(unique(data2$animal_sample))){
+                  temp <- subset(data2, data2$animal_sample == unique(data2$animal_sample)[i])
+                  tseq$y[1] <- temp$y[1]
+                  for(k in 2:nrow(tseq)){
+                      if(tseq$time[k] < temp$x[2]){
+                        slope <- (temp$y[2] - temp$y[1]) / (temp$x[2] - temp$x[1])
+                        tseq$y[k] <- tseq$time[k] * slope + tseq$y[1]
+                      }
+                  }
+                  for(k in 2:nrow(tseq)){
+                    if(tseq$time[k] > temp$x[2]){
+                      if(tseq$time[k] < temp$x[3]){
+                        tseq$y[k] <- mean(temp$y[2:3])
+                      }
+                    }
+                  }
+                  counter <- 0
+                  for(k in 2:nrow(tseq)){
+                    if(tseq$time[k] > temp$x[3]){
+                      if(tseq$time[k] < temp$x[4]){
+                        slope <- (temp$y[4] - mean(temp$y[2:3])) / (temp$x[4] - temp$x[3])
+                        tseq$y[k] <- mean(temp$y[2:3]) + (tseq$time[k] - tseq$time[k - 1] + counter) * slope
+                        counter <- counter + 5
+                      }
+                    }
+                  }
+                  for(k in 2:nrow(tseq)){
+                    if(tseq$time[k] > temp$x[4]){
+                      tseq$y[k] <- temp$y[4]
+                    }
+                  }
+                  
+                  
+                  suppressWarnings(
+                    fits <- predict(loess(tseq$y ~ tseq$time, span = sm_span), newdata = time_seq$time)
+                  )
+                  preds[i, ] <- fits
+                }
             
             # make simulated dataset
               preds2 <- preds[, bleed_times + 1]
@@ -224,13 +268,14 @@
               geom_vline(xintercept = spoints, linetype = "dashed")
             grid.arrange(p1, p2, p3, layout_matrix = rbind(c(1, 2, 2), c(3, 3, 3)))
           }
-          plot_cort_sim_1 <- function(data = cort_sim2(), x_max = 60){
+          plot_cort_sim_1 <- function(data = cort_sim2(), x_max = 60, y_max = 85){
             spoints <- unique(data$simulated_dataset_long$time)
             p <- ggplot(data = data$timecourse_long, mapping = aes(x = time, y = cort, by = animal_sample)) +
               #stat_smooth(geom = "line", method = "loess", span = 0.7, size = 0.5, alpha = 0.6, se = FALSE, color = "coral3") + 
               geom_line(size = 0.5, alpha = 0.6, color = "coral3") +
               guides(color = FALSE) +
               theme_classic() + xlab("Time") + ylab("Corticosterone") + coord_cartesian(xlim = c(0, x_max)) +
+              ylim(0, y_max) +
               geom_vline(xintercept = spoints, linetype = "dashed")
             p
           }
@@ -258,30 +303,44 @@
       p <- plot_cort_sim(demo)
       ggsave(here::here("3_r_scripts/demo.png"), p, device = "png", width = 10.2, height = 7.5)
       
+      ggsave(here::here("3_r_scripts/demo_fullx.png"), 
+        plot_cort_sim_1(demo, x_max = 160),
+        device = "png", width = 9, height = 5, units = "in")
+      
 ## Variation in speed vs. scope ----
     set.seed(955)
     d1 <- cort_sim2(cort_sim1(speed_mu = 25, speed_sd = 0))  
     d2 <- cort_sim2()
     d3 <- cort_sim2(cort_sim1(max_sd = 0))
     p1 <- plot_cort_sim_1(d1)
+    p1 <- p1 + annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A")
     p2 <- plot_cort_sim_1(d2)
+    p2 <- p2 + annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B")
     p3 <- plot_cort_sim_1(d3)
-    ggpubr::ggarrange(p1, p2, p3, nrow = 1)
+    p3 <- p3 + annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "C")
+    ggsave(here::here("3_r_scripts/relative_variation.png"),
+           ggpubr::ggarrange(p1, p2, p3, nrow = 1),
+           device = "png", width = 9.2, height = 3, units = "in")
                     
 ## Simulate data ----
     #plot_cort_sim(cort_sim2(cort_sim1(n = 60, speed_mu = 18, speed_sd = 3, base_mu = 9, base_sd = 3, cor_base_max = 0.3, cor_base_speed = -0.5, cor_speed_max = -0.7, cor_max_return = 0.4), 
     #                        bleed_times = c(1, 15, 30), sample_times = 1))
           
     # Speed vs. scope illustration
-          set.seed(80)
-          d1 <- cort_sim2(cort_sim1(cor_speed_max = -0.8))
-          d2 <- cort_sim2(cort_sim1(cor_speed_max = 0))
-          d3 <- cort_sim2(cort_sim1(cor_speed_max = 0.8))
+          d1 <- cort_sim2(cort_sim1(cor_speed_max = -0.9, return_sd = 0, maxtime_sd = 0))
+          d2 <- cort_sim2(cort_sim1(cor_speed_max = 0, return_sd = 0, maxtime_sd = 0))
+          d3 <- cort_sim2(cort_sim1(cor_speed_max = 0.9, return_sd = 0, maxtime_sd = 0))
           p1 <- plot_cort_sim_1(data = d1)
+          p1 <- p1 + annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A")
           p2 <- plot_cort_sim_1(data = d2)
+          p2 <- p2 + annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B")
           p3 <- plot_cort_sim_1(data = d3)
+          p3 <- p3 + annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "C")
           
-          ggpubr::ggarrange(p1, p2, p3, nrow = 1)
+          
+        ggsave(here::here("3_r_scripts/sp_sc_correlation.png"),
+          ggpubr::ggarrange(p1, p2, p3, nrow = 1),
+          device = "png", width = 9.2, height = 3, units = "in")
           
     # Only variation in speed. None in max
           set.seed(80)

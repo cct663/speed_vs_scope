@@ -138,8 +138,38 @@ In the default plot the three panels show
 2) The full time series dataset. This is fit with a loess curve from the 'true' values sampled with error. The 'wiggliness' can be adjusted.  
 3) The rank profile of each animal over the time series.  
 
+Below I'm mostly cropping plots at 60 minutes, but the time series goes out all the way to where the birds return to baseline, which is also sampled as part of the simulation. Like this:
 
-## Speed vs. Scope
+![](demo_fullx.png)\
+
+## Relative variation in speed or scope
+
+Measuring cort at 30 minutes at interpreting differences as variation in max cort implicitly assumes that variation in maxcort exists while variation in speed does not (or at least that it is so much smaller than max variation that it can be ignored). These three panels illustrate scenarios where cort is measured at 2, 15, and 30 minutes under different scenarios with respect to the amount of variation in speed or scope. In all three cases here, I assume that the population average maxcort is the same and that the average time to reach max cort is exactly 30 minutes (that means that we have timed our 30 minute sample perfectly for this population). Responses are measured with error, so even in cases where there is no 'true' variation, some between individual differences are visible. The correlation between all separate components of the curves are set to 0 here for simplicity. There are three scenarios:  
+
+A) Max cort varies but there is no variation in speed.  
+B) Both max cort and speed vary in reasonably comparable amounts.  
+C) Max cort does not vary but speed does.
+
+![](relative_variation.png)\
+
+Even though the sampling is the same in all three of these cases, the information encoded in the variation in cort levels at 15 and 30 minutes is very different.  
+
+**Panel A** Both the 15 and 30 minute samples accurately reflect variation in max cort. Note though that the 15 minute measure actually does a better job of capturing the rank order of max cort (though not the absolute measure) because it is taken before any individuals have started to decline. At 30 minutes, the sample is still a reasonably good measure of max cort, but some individuals have started to decline already while others are going up. The estimate of average max cort on an absolute scale is better, but the individual ranks are at least a bit out of order. Note that this is driven by small differences in the amount of time individuals sustain their highest level and how long they take to return to baseline even in the absence of any underlying variation in the 'true' value of speed to reach max cort.
+
+**Panel B** There is variation in both speed and max cort. Because speed and max cort are not correlated here, the measures at both 15 and 30 minutes are completely confounded between the two aspects and represent some combination of speed and scope that is likely impossible to disentangle without a more complete time series for each individual.
+
+**Panel C** There is no variation in max cort, but ther is variation in the speed to reach maximum. At 15 minutes, there appears to be substantial variation in absolute cort level, but this is completely attributable to variation in the speed rather than maximum cort. At 30 minutes, even though we have timed our sample exactly at the population mean, our measure is not telling us much of anything because the variation is all in the speed of response and we are sampling a mix of individuals on the way up, at their plateau, and on the way down. In this case it would be better to have samples earlier than the mean population peak value if we were interested in understanding variation in speed.
 
 
+## Correlation between speed and scope
+
+Now consider the case of how much of a correlation there is between the speed and scope of the response.
+
+![](sp_sc_correlation.png)\
+
+**Panel A** Here speed and scope have a very strong positive correlation where faster responders also reach higher maximum values. This is good in some ways because it means that even though we can't tell speed and scope apart, by measuring one we are accurately measuring both (and maybe in this case you can just think of 'strong' responders as being both fast and high). This is a nice world, but we don't really have data to tell whether this is the world we are in.
+
+**Panel B** Here this is like the one above where there is no correlation. Speed and scope are confounded and a high value at 15/30 minutes could either be because of a fast responder or a high maximum but you can't really tell which.
+
+**Panel C** Here there is a strong correlation but in the other direction such that fast responders actually end up leveling off at lower maximal cort values. I think most people might assume this usually isn't the case, but in the RWBL data above, this is actually closer to what we see (though this is a stronger correlation just to illustrate). In this case, measures at 15/30 minutes that are interpretted as max cort values could be really misleading.
 
