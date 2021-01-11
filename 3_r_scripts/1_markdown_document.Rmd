@@ -20,6 +20,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Data from 52 RWBL that we caught in 2016 & 2017 in Ithaca between 18 April and 22 July. We tried to take a 7 point stress series with samples at 1, 3, 7, 15, 30, 45, 60 minutes. The exact time points vary a little bit though and we use the exact measures in all the plots and analyses. Some samples are also missing from the end or middle of some time series.
 
+Note that I have removed one bird from early season that has an astronomically high cort value even starting at baseline and through the full series. It doesn't really make any qualitative difference, but including that bird just makes it hard to plot because it is so much higher than any others.
+
 ## Descriptive Plots
 
 First, I'm just plotting the full stress series on the raw and log scale. There are a lot of possible choices here for how best to display this, so I'm dropping in a few different options at this point. The y axis scale is very different for the three breeding stages, which makes it hard to compare the shapes. There are a few options with changing the scales or log transforming or plotting in different facets that make it easier to compare.
@@ -116,9 +118,9 @@ There are probably some different things we could do with the data above, but I 
 
 This is already described in more detail in the manuscript file I started, but basically the simulation works in two steps. I'm not sure it is worth making an actual package, but I could use some catchy function names. A package could be something like `cortResponse`. Right now my functions are just called `cort_sim1` and `cort_sim2`.
 
-First, one function generates a population with 'true' values for base, speed, max, time at plateau, and time at return to base for each along with a 'performance' metric (i.e., fitness) that is derived from those true underlying values. You can set the mean and sd for each parameter, the number of animals to generate, and the degree of correlation between each parameter. Animals are then drawn from a multivariate normal distribution with the set values. Note that the function will allow you to set any values, but a lot of combinations won't work if the produce negative values or if different traits are set to have strong correlations in a way that makes it impossible to generate a multivariate normal distribution; a message is given in these cases to try different values. I think I could extend this first function to also have slopes across a gradient for some parameters (e.g., the 'true' slope of response in base cort across a temperature gradient).
+First, one function generates a population with 'true' values for base, speed, max, time at plateau, and time at return to base for each along with a 'performance' metric (i.e., fitness) that is derived from those true underlying values. I have now also added two additional parameters for the initial slope (a period of time with a potentially steeper slope in the first part of the response) and a 'fastpct' that defines what percentage of the total stress response (max - base) occurs during that steep initial slope period. You can set the mean and sd for each parameter, the number of animals to generate, and the degree of correlation between each parameter. Animals are then drawn from a multivariate normal distribution with the set values. Note that the function will allow you to set any values, but some combinations won't work if the produce negative values or if different traits are set to have strong correlations in a way that makes it impossible to generate a multivariate normal distribution; a message is given in these cases to try different values. I think I could extend this first function to also have slopes across a gradient for some parameters (e.g., the 'true' slope of response in base cort across a temperature gradient).
 
-Second, the output from the first function is used to simulate corticosterone time courses for each animal (or multiple times for each animal). In this function you can set the degree of error from the 'true' value for each parameter. This can be thought of as measurement error or as individual variation associated with repeat sampling of the same animal. After this sampling, a loess smoothed curve is fit for each series of parameters for each animal and then 'cort' values are recorded at each minute of the full time course. The function saves a list with 1) the full time course for each sample, 2) a downsampled data set that has cort measured at just the selected time points (by default 2 & 30 minutes), and 3) a rank ordered time course to visualize the degree of crossing.
+Second, the output from the first function is used to simulate corticosterone time courses for each animal (or multiple times for each animal). In this function you can set the degree of noise from the 'true' value for each parameter. This should be thought of as within-individual variation in cort response expression. You can also set an 'assay error'. This should be thought of as measurement error associated with the assay or pipetting, etc and it is only applied to the simulated dataset that is downsampled from the full timecourse to be measured at the set 'bleed times'. After this sampling, a loess smoothed curve is fit for each series of parameters for each animal and then 'cort' values are recorded at each minute of the full time course. The function saves a list with 1) the full time course for each sample, 2) a downsampled data set that has cort measured at just the selected time points (by default 2 & 30 minutes), and 3) a rank ordered time course to visualize the degree of crossing.
 
 Using this simulation, we can explore a lot of different scenarios and ask how changing different parameters or sampling regimes might influence our ability to detect 'true' effects. There are actually so many possibilities here that I'm not sure what makes the most sense to focus on:  
 
@@ -127,9 +129,7 @@ Using this simulation, we can explore a lot of different scenarios and ask how c
 
 ## Demonstration
 
-This is a demonstration of the output and plotting function for the simulation using all the default settings. I've been playing with what makes sense as defaults, but currently this is set such that:  
-
-+ Base cort is 
+This is a demonstration of the output and plotting function for the simulation using all the default settings. I've been playing with what makes sense as defaults, but probably any individual study would want to change them for species specific values.
 
 ![](demo.png)\
 
@@ -172,4 +172,25 @@ Now consider the case of how much of a correlation there is between the speed an
 **Panel B** Here this is like the one above where there is no correlation. Speed and scope are confounded and a high value at 15/30 minutes could either be because of a fast responder or a high maximum but you can't really tell which.
 
 **Panel C** Here there is a strong correlation but in the other direction such that fast responders actually end up leveling off at lower maximal cort values. I think most people might assume this usually isn't the case, but in the RWBL data above, this is actually closer to what we see (though this is a stronger correlation just to illustrate). In this case, measures at 15/30 minutes that are interpretted as max cort values could be really misleading.
+
+# Simulate RWBL Data
+
+So one of the major challenges to disentangling speed and scope is just getting a better handle on how to parameterize these shapes for different species. How much variation is there in when individuals reach their max? How does that compare to variation in the max value itself? How do the relative contributions of those different parameters influence our ability to detect causal relationships between underlying traits and fitness when we only have measurements taken with error?
+
+There are a lot of ways we could play with this simulator to address those questions, but they involve a lot of guesswork. I think one promising approach that makes sense here is to start with the empirical data from the RWBL dataset that has a (relatively) fine scale time course measured and create a simulation that produces similar curves. Then we can ask how easily we can identify relationships between cort phenotype and fitness from the simulated data.
+
+Here is an attempt at that where I have tweaked the simulation parameters until I produce curves that look qualitatively like the RWBL data. I've collected the data with the same 7 point time series as we used in the empirical study, but we also have access to the full time course and the true values underlying it. For simplicity, I'm only using the early season records from RWBL.
+
+Like in the empirical data above, I've encoded a positive correlation between the initial slope and the max cort value achieved. All other traits are left uncorrelated.
+
+![](rwbl_sim.png)\
+
+**Figure x.** Simulated data plotted against red-winged blackbird data from the early breeding season. Simulated data are sampled at 7 time points corresponding to those used in the empirical study and plotted by animal (panel A) and with a smoothed curve and confidence interval for the simulated versus empirical data (panel B). 
+
+So this does a good job of simulating data that looks like the RWBL data. Next lets use that as a starting point to explore whether we can recover relationships between speed, scope and performance.
+
+## Scenario 1: Speed predicts performance
+
+In this first scenario, I'm simulating the data with the same parameters as above. We'll take a population of 50 animals, with cort measured at 30 and 55 minutes (since 55 is the average max time here). Speed of the cort response explains 50% of the variation in performance, scope explains 0%, and the other 50% is random.
+
 

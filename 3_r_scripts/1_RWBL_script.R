@@ -8,6 +8,7 @@
 ## Load RWBL field data ----
         rw_dat <- read.delim(here::here("1_raw_data/rwbl_data.txt"))      
         rw_dat <- subset(rw_dat, rw_dat$Bird_no != 10)    # This bird is missing most data
+        rw_dat <- subset(rw_dat, rw_dat$band != "1372-33452")
     
     ## Replacing labeling on a couple rows to make them conform to level names
         rw_dat$LH.stage<-gsub("mid-breeding","early-breeding",rw_dat$LH.stage)	
@@ -46,6 +47,23 @@
                 values.l <- gsub("NA", 0, values.l)
                 rw_dat$max.t[i] <- which.max(values.l)
             } 
+        
+        # Calculate max from loess regression
+          for(i in 1:nrow(rw_dat)){	
+            yy <- as.vector(t(rw_dat[i, 38:45]))	
+            xx <- as.vector(t(rw_dat[i, 30:37]))
+            dd <- as.data.frame(cbind(yy, xx))
+            colnames(dd) <- c("yy", "xx")
+            ss <- loess(yy ~ xx, span = 1.5) 
+            max <- max(predict(ss, seq(min(na.omit(dd$xx)), max(na.omit(dd$xx)))))
+            pct <- predict(ss, seq(min(na.omit(dd$xx)), max(na.omit(dd$xx)))) / max
+            se <- seq(min(na.omit(dd$xx)), max(na.omit(dd$xx)))
+            rw_dat$thirtypct[i] <- pct[which(1800 == se)]
+            rw_dat$time95[i] <- se[min(which(pct > 0.95))]
+            rw_dat$time.max[i] <- se[which.max(se)]
+            pred <- predict(ss,seq(min(na.omit(dd$xx)), max(na.omit(dd$xx))))
+            rw_dat$max.loess[i] <- max(pred)
+          }
         
         ### Make a long version of the data for easier plotting
               rwd_long1 <- as.data.frame(pivot_longer(rw_dat, cols = tube1_tsec:tube8_cort,
