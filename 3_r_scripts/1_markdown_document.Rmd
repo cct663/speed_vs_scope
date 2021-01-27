@@ -127,6 +127,10 @@ Using this simulation, we can explore a lot of different scenarios and ask how c
 - Sample different 'species' or 'populations' that have different shape, max, timing, or correlation between different parameters. Can you detect those differences? How much is ability to detect influenced by sampling regime?  
 - Sample 1/2/3 time points. Can you detect speed vs. max separately? Change variation in time to reach max etc and see how that changes.  
 
+This is a concept figure of what the simulation is doing:
+
+![](concept.png)\
+
 ## Demonstration
 
 This is a demonstration of the output and plotting function for the simulation using all the default settings. I've been playing with what makes sense as defaults, but probably any individual study would want to change them for species specific values.
@@ -173,6 +177,24 @@ Now consider the case of how much of a correlation there is between the speed an
 
 **Panel C** Here there is a strong correlation but in the other direction such that fast responders actually end up leveling off at lower maximal cort values. I think most people might assume this usually isn't the case, but in the RWBL data above, this is actually closer to what we see (though this is a stronger correlation just to illustrate). In this case, measures at 15/30 minutes that are interpretted as max cort values could be really misleading.
 
+## Variation in speed but not max
+
+Here is another illustration showing what happens if there is no variation in maximal cort coupled with different amounts of variation in speed (A -> C = adding more variation). In some cases (panel A), apparent variation in max at 30 minutes is really just measuring speed (but at least measuring it well). In others (Panel C), variation in 'max' at 30 minutes just isn't measuring anything, but still looks like there is individual variation.
+
+![](var_in_speed_only.png)\
+
+
+ 
+# Extensions
+
+Leaving notes here for myself. I think that I can pretty easily add:  
+
+- Calculate and output area under the curve as a default based on whatever sampling points are chosen. This wouldn't be an additional parameter, but would change as a consequence of the parameters set above.  
+
+- Make an extra function that will calculate profile repeatability (Reed & Romero 2019) from a simulated dataset with >1 sample drawn per individual. I *think* I can do this, but looking back quickly at how they actually calculated this, it is kind of a mess that involves counting the number of crossovers between time points. I might still be able to code it that way though, will have to look in more detail. 
+
+- Given a set of parameters, could I make the function tell you the optimal times to collect x number of samples if you want to separately estimate speed and scope? Presumably you would want a couple early to get at rapid increase. But if there is very little variation in baseline cort then it might be better not to 'waste' a baseline measure? To really get time to max you kind of need a few samples pre/at/post max right?  
+
 # Simulate RWBL Data
 
 So one of the major challenges to disentangling speed and scope is just getting a better handle on how to parameterize these shapes for different species. How much variation is there in when individuals reach their max? How does that compare to variation in the max value itself? How do the relative contributions of those different parameters influence our ability to detect causal relationships between underlying traits and fitness when we only have measurements taken with error?
@@ -192,5 +214,10 @@ So this does a good job of simulating data that looks like the RWBL data. Next l
 ## Scenario 1: Speed predicts performance
 
 In this first scenario, I'm simulating the data with the same parameters as above. We'll take a population of 50 animals, with cort measured at 30 and 55 minutes (since 55 is the average max time here). Speed of the cort response explains 50% of the variation in performance, scope explains 0%, and the other 50% is random.
+
+
+- Scenarios to point out:
+
+If there is any variation in speed, observed repeatability in basecort can be entirely attributable to speed even if there is 0 variation in basecort. This situation may be better if there really is a lag between capture and increase, but how do you assess if there is individual variation in the time of that lag?
 
 

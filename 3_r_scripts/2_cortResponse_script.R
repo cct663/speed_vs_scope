@@ -3,7 +3,7 @@
 
 
 ## Load packages ----
-    pacman::p_load(ggplot2, here, MASS, MBESS, tidyverse, viridis, gridExtra)
+    pacman::p_load(ggplot2, here, MASS, MBESS, tidyverse, viridis, gridExtra, sp, rptR)
 
 ## Create simulation function ----
   # The first function simulates cort response parameters for a population of animals of size n. We
@@ -16,11 +16,11 @@
           #time at max cort level
           #time of return to base cort level 
           cort_sim1 <- function(n = 20, 
-                               base_mu = 5, base_sd = 1.5, base_min = 0.5,
-                               slope_mu = 15, slope_sd = 1,
-                               fastpct_mu = 0.65, fastpct_sd = 0.05, 
+                               base_mu = 5, base_sd = 2, base_min = 0.5,
+                               slope_mu = 15, slope_sd = 2,
+                               fastpct_mu = 0.55, fastpct_sd = 0.08, 
                                speed_mu = 25, speed_sd = 5, speed_min = 10,
-                               max_mu = log(50), max_sd = 0.21, 
+                               max_mu = log(45), max_sd = 0.21, 
                                maxtime_mu = 10, maxtime_sd = 3, maxtime_min = 5,
                                return_mu = 90, return_sd = 15, 
                                cor_base_speed = 0, cor_base_max = 0, cor_base_maxtime = 0, cor_base_return = 0, cor_base_slope = 0, cor_base_fastpct = 0,
@@ -65,7 +65,7 @@
                           animal = paste("id", 1:n, sep = "_"),
                           base = msam[, 1],
                           tmax = msam[, 2],
-                          max = exp(msam[, 3]),
+                          max = exp(msam[, 3]) + msam[, 1],
                           atmax = msam[, 4],
                           return = msam[, 5],
                           slope = msam[, 6],
@@ -94,7 +94,7 @@
                                 sim_dat$atmax + sim_dat$tmax,
                                 sim_dat$return),
                           y = c(sim_dat$base,
-                                (sim_dat$max - sim_dat$base) * sim_dat$fastpct,
+                                (sim_dat$max - sim_dat$base) * sim_dat$fastpct + sim_dat$base,
                                 sim_dat$max,
                                 sim_dat$max,
                                 sim_dat$base),
@@ -117,20 +117,20 @@
         # a simulated dataset with samples at specified time points, the full time course with cort at every time point, and a 
         # rank converted estimate. 
           cort_sim2 <- function(data = cort_sim1(),
-                                bleed_times = c(2, 15, 30),  # Time in minutes to save 'bleed' samples at
-                                base_error = 0.1,            # Variation in base from 'true' value as a percentage
-                                speed_error = 0.1,           # Variation in time to reach max from 'true value as percentage
-                                max_error = 0.1,             # Variation in max cort from 'true' value as percentage
-                                maxtime_error = 0.1,         # Variation in time at max cort from 'true' value as percentage
-                                return_error = 0.1,          # Variation in time to return to base from 'true' value as percentage
-                                slope_error = 0.1,           # Variation in length of fast slope initial increase from 'true' value as percentage
-                                fastpct_error = 0.1,         # Variation in percent of max reached during initial fast increase from 'true' as percentage
+                                bleed_times = c(1, 15, 30),  # Time in minutes to save 'bleed' samples at
+                                base_error = 0.8,            # Variation in base from 'true' value as a percentage of true value
+                                speed_error = 0.7,           # Variation in time to reach max from 'true value as percentage
+                                max_error = 0.7,             # Variation in max cort from 'true' value as percentage
+                                maxtime_error = 0.7,         # Variation in time at max cort from 'true' value as percentage
+                                return_error = 0.7,          # Variation in time to return to base from 'true' value as percentage
+                                slope_error = 0.7,           # Variation in length of fast slope initial increase from 'true' value as percentage
+                                fastpct_error = 0.7,         # Variation in percent of max reached during initial fast increase from 'true' as percentage
                                 sample_times = 2,            # Number of samples to draw for each animal
-                                assay_error = 0.1,           # Measurement error after sampling.
+                                assay_error = 0.1,           # Measurement error after sampling as percent of value normal error mean = 0
                                 timecourse_max = 170,        # Number of minutes for the full time course
                                 performance_contributions = c(0, 0, 0, 0, 0, 1, 0, 1), 
                                         # Relative contributions of base, speed, max, maxtime, return, slope, fastpct, and random error to performance
-                                sm_span = 0.4                # Smoothing parameter for loess regression. Smaller = more wiggly.
+                                sm_span = 0.4              # Smoothing parameter for loess regression. Smaller = more wiggly.
                                 ) 
               {
             
@@ -166,32 +166,59 @@
                     data2 <- plyr::join(data2, data3[, c("animal_sample", "performance")], "animal_sample", "left", "first")
             
             # Adding noise to 'true' values to represent within individual variation in response expression
-                # Add noise (could be individual variation or measurement error)
+                # This is best thought of as within individual variation. It is set by changing the values to a percent of the observed value
+                  # that is attributable to a random draw from the population distribution (error) and a percent that is attributable to the 
+                  # true underlying value of the individual (1 - error).
                   # Noise for base cort
-                    data2[which(data2$group == "initial"), "y"] <- data2[which(data2$group == "initial"), "y"] +
-                      rnorm(n = length(data2[which(data2$group == "initial"), "y"]),
-                            mean = 0,
-                            sd = base_error * data2[which(data2$group == "initial"), "y"])
+                    data2[which(data2$group == "initial"), "y"] <- (1 - base_error) * data2[which(data2$group == "initial"), "y"] +
+                      base_error * rnorm(n = length(data2[which(data2$group == "initial"), "y"]),
+                                         mean = mean(data2[which(data2$group == "initial"), "y"]),
+                                         sd = sd(data2[which(data2$group == "initial"), "y"]))
+                    
                   # Noise for speed to response
-                    data2[which(data2$group == "reachmax"), "x"] <- data2[which(data2$group == "reachmax"), "x"] +
-                      rnorm(n = length(data2[which(data2$group == "reachmax"), "x"]),
-                            mean = 0,
-                            sd = speed_error * data2[which(data2$group == "reachmax"), "x"])
+                    data2[which(data2$group == "slopeturn"), "x"] <- (1 - slope_error) * data2[which(data2$group == "slopeturn"), "x"] +
+                      slope_error * rnorm(n = length(data2[which(data2$group == "slopeturn"), "x"]),
+                                mean = mean(data2[which(data2$group == "slopeturn"), "x"]), 
+                                sd = sd(data2[which(data2$group == "slopeturn"), "x"]))
+                    
+                  # noise for fast percent
+                    data2[which(data2$group == "slopeturn"), "y"] <- (1 - fastpct_error) * data2[which(data2$group == "slopeturn"), "y"] +
+                      fastpct_error * rnorm(n = length(data2[which(data2$group == "slopeturn"), "y"]),
+                                            mean = mean(data2[which(data2$group == "slopeturn"), "y"]),
+                                            sd = sd(data2[which(data2$group == "slopeturn"), "y"]))
+
+                  # Noise for speed to reach maxcort
+                    data2[which(data2$group == "reachmax"), "x"] <- (1 - speed_error) * data2[which(data2$group == "reachmax"), "x"] +
+                      speed_error * rnorm( n = length(data2[which(data2$group == "reachmax"), "x"]),
+                                           mean = mean(data2[which(data2$group == "reachmax"), "x"]),
+                                           sd = sd(data2[which(data2$group == "reachmax"), "x"]))
+                    
                   # Noise for maxcort
-                    data2[which(data2$group == "reachmax"), "y"] <- data2[which(data2$group == "reachmax"), "y"] +
-                      rnorm(n = length(data2[which(data2$group == "reachmax"), "y"]),
-                            mean = 0,
-                            sd = max_error * data2[which(data2$group == "reachmax"), "y"])
+                    data2[which(data2$group == "reachmax"), "y"] <- (1 - max_error) * data2[which(data2$group == "reachmax"), "y"] +
+                      max_error * rnorm(n = length(data2[which(data2$group == "reachmax"), "y"]),
+                                        mean = mean(data2[which(data2$group == "reachmax"), "y"]),
+                                        sd = sd(data2[which(data2$group == "reachmax"), "y"]))
+                        
+                  # change start decline to match new max cort
+                    data2[which(data2$group == "startdecline"), "y"] <- data2[which(data2$group == "reachmax"), "y"]
+                    
                   # Noise for max time
-                    data2[which(data2$group == "startdecline"), "x"] <- data2[which(data2$group == "startdecline"), "x"] +
-                      rnorm(n = length(data2[which(data2$group == "startdecline"), "x"]),
-                            mean = 0,
-                            sd = maxtime_error * data2[which(data2$group == "startdecline"), "x"])
+                    data2[which(data2$group == "startdecline"), "x"] <- (1 - maxtime_error) * data2[which(data2$group == "startdecline"), "x"] +
+                      maxtime_error * rnorm(n = length(data2[which(data2$group == "startdecline"), "x"]),
+                                            mean = mean(data2[which(data2$group == "startdecline"), "x"]),
+                                            sd = sd(data2[which(data2$group == "startdecline"), "x"]))
+                      
                   # Noise for return
-                    data2[which(data2$group == "return"), "x"] <- data2[which(data2$group == "return"), "x"] +
-                      rnorm(n = length(data2[which(data2$group == "return"), "x"]),
-                            mean = 0,
-                            sd = return_error * data2[which(data2$group == "return"), "x"])
+                    data2[which(data2$group == "return"), "x"] <- (1 - return_error) * data2[which(data2$group == "return"), "x"] +
+                      return_error * rnorm(n = length(data2[which(data2$group == "return"), "x"]),
+                                           mean = mean(data2[which(data2$group == "return"), "x"]),
+                                           sd = sd(data2[which(data2$group == "return"), "x"]))
+                    
+                  # noise for return basecort level
+                    data2[which(data2$group == "return"), "y"] <- (1 - base_error) * data2[which(data2$group == "return"), "y"] +
+                      base_error * rnorm(n = length(data2[which(data2$group == "return"), "y"]),
+                                           mean = mean(data2[which(data2$group == "return"), "y"]),
+                                           sd = sd(data2[which(data2$group == "return"), "y"]))  
                 
             # Make a time sequence with filler points every 5 minutes to make loess fit smoother. I did this because otherwise you end
                 # up with different length (of time) gaps on the x axis and the curves can fit in weird ways with certain parameters.
@@ -267,6 +294,8 @@
                                     )
                                     preds[i, ] <- fits
                             }
+                        # Convert any negative numbers to 0
+                          preds[preds < 0] <- 0
             
             # Make simulated data set sampled just at the bleed times
                     preds2 <- preds[, bleed_times + 1]
@@ -320,16 +349,251 @@
                 true$return <- true$x_return - true$x_startdecline
                 true <- true[, c("animal", "baseline", "slope", "fastpct", "speed", "max", "atmax", "return")]
                 true <- plyr::join(true, preds2_long[, c("animal", "performance")], "animal", "left", "first")
+                
+            # Calculate area under the curve for the true values
+                for(u in 1:nrow(true)){
+                    box_coords <- matrix(c(0, 0,
+                                            0, true$baseline[u],
+                                           true$slope[u], true$fastpct[u] * true$max[u],
+                                           true$speed[u], true$max[u],
+                                           true$speed[u] + true$atmax[u], true$max[u],
+                                           true$return[u] + true$speed[u] + true$baseline[u], true$baseline[u],
+                                           true$return[u] + true$speed[u] + true$baseline[u], 0,
+                                           0, 0),
+                                          nrow = 8, ncol = 2, byrow = TRUE)
+                    box_coords2 <- box_coords[c(2:6, 2), ]
+                    true$AUCg[u] <- Polygon(box_coords, hole = FALSE)@area / (true$return[u] + true$speed[u] + true$baseline[u])
+                    true$AUCi[u] <- Polygon(box_coords2, hole = FALSE)@area / (true$return[u] + true$speed[u] + true$baseline[u])
+                }
+                
+            # Calculate area under the curve for observed curves
+                obs_AUC <- data.frame(animal_sample = unique(preds2_long$animal_sample))
+                for(u in 1:nrow(obs_AUC)){
+                  sub <- subset(preds2_long, preds2_long$animal_sample == obs_AUC$animal_sample[u])
+                  box1 <- matrix(nrow = nrow(sub) + 2, ncol = 2)
+                  box1[1, ] <- c(sub$time[1], sub$cort[1])
+                  for(k in 2:nrow(sub)){
+                    box1[k, ] <- c(sub$time[k], sub$cort[k])
+                  }
+                  box1[nrow(sub) + 1, ] <- c(sub$time[nrow(sub)], sub$cort[1])
+                  box1[nrow(sub) + 2, ] <- box1[1, ]
+                  
+                  box2 <- box1
+                  box2[1, 2] <- 0
+                  box2[nrow(box2) - 1, 2] <- 0
+                  box2[nrow(box2), 2] <- 0
+                  
+                  obs_AUC$sample_AUCi[u] <- Polygon(box1, hole = FALSE)@area / (sub$time[nrow(sub)] - sub$time[1])
+                  obs_AUC$sample_AUCg[u] <- Polygon(box2, hole = FALSE)@area / (sub$time[nrow(sub)] - sub$time[1])
+                }
+                
+                for(u in 1:nrow(obs_AUC)){
+                  sub <- subset(pred_time_long, pred_time_long$animal_sample == obs_AUC$animal_sample[u])
+                  box1 <- matrix(nrow = nrow(sub) + 2, ncol = 2)
+                  box1[1, ] <- c(sub$time[1], sub$cort[1])
+                  for(k in 2:nrow(sub)){
+                    box1[k, ] <- c(sub$time[k], sub$cort[k])
+                  }
+                  box1[nrow(sub) + 1, ] <- c(sub$time[nrow(sub)], sub$cort[1])
+                  box1[nrow(sub) + 2, ] <- box1[1, ]
+                  
+                  box2 <- box1
+                  box2[1, 2] <- 0
+                  box2[nrow(box2) - 1, 2] <- 0
+                  box2[nrow(box2), 2] <- 0
+                  
+                  obs_AUC$full_AUCi[u] <- Polygon(box1, hole = FALSE)@area / (sub$time[nrow(sub)] - sub$time[1])
+                  obs_AUC$full_AUCg[u] <- Polygon(box2, hole = FALSE)@area / (sub$time[nrow(sub)] - sub$time[1])
+                  
+                  sub2 <- subset(sub, sub$time < max(preds2_long$time) & sub$time > min(preds2_long$time))
+                  
+                  box1 <- matrix(nrow = nrow(sub2) + 2, ncol = 2)
+                  box1[1, ] <- c(sub2$time[1], sub2$cort[1])
+                  for(k in 2:nrow(sub2)){
+                    box1[k, ] <- c(sub2$time[k], sub2$cort[k])
+                  }
+                  box1[nrow(sub2) + 1, ] <- c(sub2$time[nrow(sub2)], sub2$cort[1])
+                  box1[nrow(sub2) + 2, ] <- box1[1, ]
+                  
+                  box2 <- box1
+                  box2[1, 2] <- 0
+                  box2[nrow(box2) - 1, 2] <- 0
+                  box2[nrow(box2), 2] <- 0
+                  
+                  obs_AUC$subfull_AUCi[u] <- Polygon(box1, hole = FALSE)@area / (sub$time[nrow(sub2)] - sub2$time[1])
+                  obs_AUC$subfull_AUCg[u] <- Polygon(box2, hole = FALSE)@area / (sub$time[nrow(sub2)] - sub2$time[1])
+                }
+                
+                obs_AUC <- plyr::join(obs_AUC, pred_time_long[, c("animal_sample", "animal", "sample")], "animal_sample", "left", "first")
+                true_tem <- true[, c("animal", "AUCg", "AUCi")]
+                colnames(true_tem)[2:3] <- c("true_AUCg", "true_AUCi")
+                obs_AUC <- plyr::join(obs_AUC, true_tem, "animal", "left")
               
-            # output all three dataframes plus the initial 'true' values
+            # output all five dataframes plus the initial 'true' values
               dataset <- list(simulated_dataset_long = preds2_long,
                               timecourse_long = pred_time_long,
                               rank_timecourse = long_rank,
+                              AUC_measures = obs_AUC,
                               true_values = true)
               return(dataset)
-      }
+          }
+          
+    ## Repeatability functions
+          # This function will take a simulated dataset where each individual is observed at least two times and calculate repeatability
+            # of cort for each time measure, for AUCi & AUCg (from full simulated timecourse and from sub-sampled points),
+            # and profile repeatability (Reed & Romero). 
+        
+        # This is the main function that will calculate repeatability for several different AUCs and for each timepoint as well
+          # as producing three plots that are saved in a list.
+            cort_repeat <- function(data = cort_sim2(sample_times = 6),       # data input from cort simulation functions above
+                                    boots = 100,              # number of bootstraps for repeatability calculations
+                                    perms = 0                 # number of permutations for repeatability calculations; 0 = NA
+                                    )
+              {
+              
+              # Calculate profile repeatability as described in Reed & Romero 2019. This is a really tedious calculation that involves
+                # counting the number of times lines cross etc. The code could probably be cleaner. One PR is calculated for each individual
+                # and then an average can be taken for all of them together.
+              
+                    # How many times are cort values saved at
+                        times <- length(unique(data$simulated_dataset_long$time))
+                        
+                    # new data frame with one row for each animal
+                        pr_animal <- data.frame(animal = unique(data$simulated_dataset_long$animal))
+                        
+                    # Loop through each animal and calculate PR
+                            for(u in 1:nrow(pr_animal)){
+                                    sub <- subset(data$simulated_dataset_long, data$simulated_dataset_long$animal == pr_animal$animal[u])
+                                    pr_animal$possible_cross[u] <- sum(seq(1:(length(unique(sub$sample)) - 1))) * (times - 1)
+                                    obs_cross <- 0
+                                
+                                  # data wrangling to count the number of crosses observed
+                                    sub2 <- as.data.frame(pivot_wider(sub, names_from = time, values_from = cort))
+                                    subx <- sub2
+                                    colnames(subx) <- paste0(colnames(sub2), "_rep")
+                                    colnames(subx)[2] <- "animal"
+                                    sub3 <- plyr::join(sub2, subx, "animal", "left")
+                                    sub3 <- subset(sub3, sub3$sample != sub3$sample_rep)
+                                    for(k in 1:nrow(sub3)){
+                                      or <- order(c(sub3$sample[k], sub3$sample_rep[k]))
+                                      sam <- c(sub3$sample[k], sub3$sample_rep[k])
+                                      sub3$pair[k] <- paste(sam[or[1]], sam[or[2]], sep = "_")
+                                    }
+                                    sub3 <- subset(sub3, !duplicated(sub3$pair))
+                                    
+                                    for(w in 1:nrow(sub3)){
+                                      for(t in 1:(times - 1)){
+                                        if(sub3[w, t + 4] > sub3[w, times + 7 + t]){
+                                          if(sub3[w, t + 5] < sub3[w, times + 8 + t]){obs_cross <- obs_cross + 1}
+                                        }
+                                        if(sub3[w, t + 4] < sub3[w, times + 7 + t]){
+                                          if(sub3[w, t + 5] > sub3[w, times + 8 + t]){obs_cross <- obs_cross + 1}
+                                        }
+                                      }  
+                                    }  
+                                    pr_animal$obs_cross[u] <- obs_cross 
+                                    
+                                # calculting the other numbers needed for PR
+                                    sam_times <- unique(data$simulated_dataset_long$time)
+                                    vars <- rep(NA, length(sam_times))
+                                    for(m in 1:length(sam_times)){
+                                      subvar <- subset(sub, sub$time == sam_times[m])
+                                      vars[m] <- var(subvar$cort)
+                                    }
+                                    
+                                    pr_animal$maxvar[u] <- max(vars)
+                                    pr_animal$avevar[u] <- mean(vars)
+                    
+                            }
+                      
+                        # Saving the numbers and making final PR calculation for each animal
+                        # If you want to save PR for each animal need to modify to return this 'pr_animal' object
+                            pr_animal$cross_score <- pr_animal$maxvar * round(10 * pr_animal$obs_cross / pr_animal$possible_cross) / 5
+                            pr_animal$base <- ((pr_animal$maxvar + pr_animal$avevar + pr_animal$cross_score) / 100) - 5
+                            pr_animal$PR <- 1 - (1 / (1 + exp(- pr_animal$base)))
+                            
+                        # Avarage PR for the whole dataset
+                            avg_PR <- mean(pr_animal$PR)
+                            
+              # Calculate repeatability of the other metrics using rptR and simple LMMs
+                    # Repeatability of AUC measures
+                            suppressWarnings(
+                              r_sample_AUCi <- rpt(sample_AUCi ~ (1|animal), grname = "animal", data = data$AUC_measures, nboot = boots, npermut = perms))
+                            suppressWarnings(
+                              r_sample_AUCg <- rpt(sample_AUCg ~ (1|animal), grname = "animal", data = data$AUC_measures, nboot = boots, npermut = perms))
+                            suppressWarnings(
+                              r_full_AUCi <- rpt(full_AUCi ~ (1|animal), grname = "animal", data = data$AUC_measures, nboot = boots, npermut = perms))
+                            suppressWarnings(
+                              r_full_AUCg <- rpt(full_AUCg ~ (1|animal), grname = "animal", data = data$AUC_measures, nboot = boots, npermut = perms))
+                            suppressWarnings(
+                              r_subfull_AUCi <- rpt(subfull_AUCi ~ (1|animal), grname = "animal", data = data$AUC_measures, nboot = boots, npermut = perms))
+                            suppressWarnings(
+                              r_subfull_AUCg <- rpt(subfull_AUCg ~ (1|animal), grname = "animal", data = data$AUC_measures, nboot = boots, npermut = perms))
+                            
+              # Calculate repeatability for measures at each timepoint
+                  temp <- as.data.frame(pivot_wider(data$simulated_dataset_long, names_from = time, values_from = cort))
+                  colnames(temp)[5:(ncol(temp))] <- paste0("time", colnames(temp)[5:(ncol(temp))])
+                  save_rs <- list(NA)
+                  for(a in 1:(ncol(temp) - 4)){
+                    temp$response <- temp[, a + 4]
+                    save_rs[[a]] <- rpt(response ~ (1|animal), grname = "animal", data = temp, nboot = boots, npermut = perms, datatype = "Gaussian")
+                  }
+                  
+                  temp_rs <- data.frame(repeatability = rep(NA, length(save_rs)), lowCI = rep(NA, length(save_rs)), 
+                                        highCI = rep(NA, length(save_rs)), pLRT = rep(NA, length(save_rs)), pPERM = rep(NA, length(save_rs)))
+                  for(t in 1:length(save_rs)){
+                    temp_rs$repeatability[t] <- save_rs[[t]]$R
+                    temp_rs$lowCI[t] <- save_rs[[t]]$CI_emp[1]
+                    temp_rs$highCI[t] <- save_rs[[t]]$CI_emp[2]
+                    temp_rs$pLRT[t] <- save_rs[[t]]$P[1]
+                    temp_rs$pPERM[t] <- save_rs[[t]]$P[2]
+                  }
+                  
+              # Build a data frame with all the repeatability measures
+                  cort_repeat <- data.frame(measure = c("PR", "sample_AUCi", "sample_AUCg", "full_AUCi", "full_AUCg", "subfull_AUCi", "subfull_AUCg",
+                                                        colnames(temp)[5:(ncol(temp) - 1)]),
+                                            repeatability = c(avg_PR, unlist(r_sample_AUCi$R), unlist(r_sample_AUCg$R), 
+                                                              unlist(r_full_AUCi$R), unlist(r_full_AUCg$R), 
+                                                              unlist(r_subfull_AUCi$R), unlist(r_subfull_AUCg$R), unlist(temp_rs$repeatability[1:nrow(temp_rs)])),
+                                            lowCI = c(NA, unlist(r_sample_AUCi$CI_emp[1]), unlist(r_sample_AUCg$CI_emp[1]), 
+                                                                unlist(r_full_AUCi$CI_emp[1]), unlist(r_full_AUCg$CI_emp[1]), 
+                                                                unlist(r_subfull_AUCi$CI_emp[1]), unlist(r_subfull_AUCg$CI_emp[1]), unlist(temp_rs$lowCI[1:nrow(temp_rs)])),
+                                            highCI = c(NA, unlist(r_sample_AUCi$CI_emp[2]), unlist(r_sample_AUCg$CI_emp[2]), 
+                                                      unlist(r_full_AUCi$CI_emp[2]), unlist(r_full_AUCg$CI_emp[2]), 
+                                                      unlist(r_subfull_AUCi$CI_emp[2]), unlist(r_subfull_AUCg$CI_emp[2]), unlist(temp_rs$highCI[1:nrow(temp_rs)])),
+                                            pLRT = c(NA, unlist(r_sample_AUCi$P[1]), unlist(r_sample_AUCg$P[1]), 
+                                                      unlist(r_full_AUCi$P[1]), unlist(r_full_AUCg$P[1]), 
+                                                      unlist(r_subfull_AUCi$P[1]), unlist(r_subfull_AUCg$P[1]), unlist(temp_rs$pLRT[1:nrow(temp_rs)])),
+                                            pPERM = c(NA, unlist(r_sample_AUCi$P[2]), unlist(r_sample_AUCg$P[2]), 
+                                                      unlist(r_full_AUCi$P[2]), unlist(r_full_AUCg$P[2]), 
+                                                      unlist(r_subfull_AUCi$P[2]), unlist(r_subfull_AUCg$P[2]), unlist(temp_rs$pPERM[1:nrow(temp_rs)]))
+                                            )
+                            
+              # Make three different plots
+                  p1 <- ggplot(data$simulated_dataset_long, mapping = aes(x = time, y = cort, by = animal_sample, color = animal)) +
+                    geom_line() + theme_classic() + scale_color_viridis(discrete = TRUE) +
+                    guides(color = FALSE)
+                  
+                  p2 <- p1 + facet_wrap(~ animal)
+                  
+                  p3 <- ggplot(data = data$simulated_dataset_long, mapping = aes(x = animal, y = cort, color = animal, fill = animal)) +
+                    geom_boxplot(alpha = 0.2) + scale_fill_viridis(discrete = TRUE) + 
+                    geom_point() + facet_wrap(~time, scales = "free") + scale_color_viridis(discrete = TRUE) + 
+                    guides(color = FALSE, fill = FALSE) +
+                    theme_bw() + theme(axis.text.x = element_text(angle = 90))
+                  
+              # Combine plot and data
+                  output <- list(repeat_est = cort_repeat,
+                                 plot_all = p1,
+                                 plot_panels = p2,
+                                 plot_dots = p3)
+                  
+                  return(output)
+                            
+            }
+            
       
-    # Plot function. The datasets generated in cort_sim2 can be used to make any number of different plots or models. But this
+    # Plot functions. The datasets generated in cort_sim2 can be used to make any number of different plots or models. But this
         # function creates a three panel summary plot that illustrates the data. It's only input is a list with the three data
         # frames output by 'cort_sim2'. It will by default generate a new dataset when called if one isn't provided.
           plot_cort_sim <- function(data = cort_sim2())
@@ -353,7 +617,8 @@
               geom_vline(xintercept = spoints, linetype = "dashed")
             grid.arrange(p1, p2, p3, layout_matrix = rbind(c(1, 2, 2), c(3, 3, 3)))
           }
-          plot_cort_sim_1 <- function(data = cort_sim2(), x_max = 60, y_max = 85){
+          plot_cort_sim_1 <- function(data = cort_sim2(), x_max = 60, y_max = 85)
+              {
             spoints <- unique(data$simulated_dataset_long$time)
             p <- ggplot(data = data$timecourse_long, mapping = aes(x = time, y = cort, by = animal_sample)) +
               #stat_smooth(geom = "line", method = "loess", span = 0.7, size = 0.5, alpha = 0.6, se = FALSE, color = "coral3") + 
@@ -384,7 +649,7 @@
     set.seed(955)
     d1 <- cort_sim2(cort_sim1(speed_mu = 25, speed_sd = 0, max_sd = 0.2))  
     d2 <- cort_sim2(cort_sim1(max_sd = 0.2))
-    d3 <- cort_sim2(cort_sim1(max_sd = 0))
+    d3 <- cort_sim2(cort_sim1(max_sd = 0, speed_sd = 10))
     p1 <- plot_cort_sim_1(d1)
     p1 <- p1 + annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A")
     p2 <- plot_cort_sim_1(d2)
@@ -416,22 +681,24 @@
           device = "png", width = 9.2, height = 3, units = "in")
           
     # Only variation in speed. None in max
-          set.seed(80)
-          d1 <- cort_sim2(cort_sim1(max_sd = 0, speed_sd = 0))
-          d2 <- cort_sim2(cort_sim1(max_sd = 0, speed_sd = 6))
-          d3 <- cort_sim2(cort_sim1(max_sd = 0, speed_sd = 12))
+          set.seed(82)
+          d1 <- cort_sim2(cort_sim1(max_sd = 0, speed_mu = 30, speed_sd = 3, base_sd = 0.1), sample_times = 1, sm_span = 0.2)
+          d2 <- cort_sim2(cort_sim1(max_sd = 0, speed_mu = 30, speed_sd = 6, base_sd = 0.1), sample_times = 1, sm_span = 0.2)
+          d3 <- cort_sim2(cort_sim1(max_sd = 0, speed_mu = 30, speed_sd = 12, base_sd = 0.1), sample_times = 1, sm_span = 0.2)
           p1 <- plot_cort_sim_1(data = d1)
           p2 <- plot_cort_sim_1(data = d2)
           p3 <- plot_cort_sim_1(data = d3)
           
-          ggpubr::ggarrange(p1, p2, p3, nrow = 1)
+          ggsave(here::here("3_r_scripts/var_in_speed_only.png"),
+                 ggpubr::ggarrange(p1, p2, p3, nrow = 1),
+                 device = "png", width = 9.2, height = 3, units = "in")
           
     
 ## Simulate RWBL data ----
      rwde <- subset(rwd_long, rwd_long$LH.stage == "early-breeding")  
       rwde_wide <- subset(rw_dat, rw_dat$LH.stage == "early-breeding")
       rwde <- subset(rwde, rwde$band != "1372-33452")   # This one has an unusually high cort response
-    set.seed(158)
+    set.seed(165)
      sim_rwd <- cort_sim2(cort_sim1(
        n = 23,
        base_mu = 4,
@@ -439,8 +706,8 @@
        slope_mu = 18,
        slope_sd = 0.5,
        fastpct_mu = 0.78,
-       max_mu = log(61),
-       max_sd = 0.3,
+       max_mu = log(57),
+       max_sd = 0.36,
        speed_mu = 60,
        speed_sd = 5,
        return_mu = 120,
@@ -481,6 +748,8 @@
        theme(legend.position = c(0.8, 0.15)) +
        guides(color = guide_legend(title = ""), fill = guide_legend(title = "")) +
        annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B")
+
+      ggpubr::ggarrange(p1, p2, nrow = 1)     
      
      ggsave(here::here("3_r_scripts/rwbl_sim.png"),
             ggpubr::ggarrange(p1, p2, nrow = 1),
