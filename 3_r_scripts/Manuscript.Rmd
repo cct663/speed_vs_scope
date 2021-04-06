@@ -1,0 +1,98 @@
+---
+title: "Functions for simulating data and designing studies of physiological flexibility in the acute glucocorticoid response to stressors"
+author: "Conor Taff"
+date: "Last Updated: `r format(Sys.time(), '%B %d %Y at %H:%M')`"
+output: pdf_document
+bibliography: references.bib
+csl: animal-behaviour.csl
+---
+
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## ABSTRACT
+
+Wild animals often experience unpredictable challenges that demand rapid and flexible responses. The glucocorticoid mediated stress response is one of the major systems that allows vertebrates to rapidly adjust their physiology and behavior. Given it's role in responding to challenges, evolutionary physiologists have focused on the consequences of between-individual and, more recently, within-individual variation in the acute glucocorticoid response. Although sophisticated approaches are available to partition this variation statistically, empirical studies of physiological flexibility are severely limited by the logistical challenges of measuring the same animal multiple times during a single acute response or across multiple instances of acute responses. Empiricists have largely adopted the strategy of standardizing sampling as much as possible to allow for comparison between individuals, but this standardization also makes it very difficult to detect certain types of variation in the functional shape of acute response curves. Data simulation is a powerful approach when empirical data are limited, but has not been adopted to date in studies of physiological flexibility. In this paper, I describe a set of simulation functions that can generate realistic acute glucorticoid response data with user specified characteristics. Simulated animals can be sampled continuously through an acute response and across as many separate responses as desired, while varying key parameters (e.g., the degree of correlation between the speed and scope of a response). Using this simulation, I explore several possible scenarios to highlight areas where simulation might either provide new insight into physiological flexibility directly or aid in designing empirical studies that are better able to test the hypotheses of interest. Complete code and a worked vignette using the functions are provided so that the simulation can be adapted to any study system.
+
+## INTRODUCTION
+
+Animals live in a dynamic environment in which they regularly encounter unpredictable challenges. Successfully navigating these challenges often requires the ability to rapidly adjust behavior and physiology to match current conditions. For vertebrates, the glucocorticoid mediated stress response plays a major role in coordinating these changes when stressors are encountered [@wingfield1998; @sapolsky2000] and similar rapid response systems mediate changes in other taxa [@taborsky2020]. Because of the central role that this response plays in coping with challenges, a great deal of research effort over the past 15 years has focused on understanding whether between-individual differences in the magnitude of this response predict coping ability and, ultimately, fitness [@breuner2008; @schoenle2020]. 
+
+More recently, a series of conceptual papers have asked whether the degree of within-individual variation in glucocorticoid modulation (i.e., endocrine flexibility) across different contexts or in response to different stressors might also be an important predictor of performance [@taff2016; @hau2016; @wada2014; @lema2013]. Perhaps the major limit to empirical progress, especially for within-individual variation, is the logistical difficulty of accurately characterizing the functional shape of the acute physiological stress response for an individual during a single acute response and across multiple acute responses occurring under different conditions. Often, these measures are strictly limited by the number of samples that can safely be taken from an animal during a single capture and the number of repeated captures that are possible [but see @koolhaas2011]. Given these limitations, data simulation is a powerful tool that could complement empirical work in this area, but that has not yet been applied to studies of endocrine flexibility.
+
+Several recent papers have suggested that physiologists interested in endocrine flexibility should adopt a within-individual reaction norm approach [e.g., @hau2016; @taff2016]. This approach has been widely adopted in studies of behavioral flexibility where statistical approaches and empirical progress have developed synergistically [e.g., @araya2015; @dingemanse2010; @westneat2015]. This field has also benefited from simulation studies to evaluate optimal study design [@van2012] and packages that can create artificial datasets with desired patterns of between, within, and residual variance to evaluate the consequences of different patterns of variation on the ability to detect effects [see SQuID package, @allegue2017]. While these approaches are powerful, they have proven difficult to apply directly to endocrine flexibility data for two reasons. First, simulation studies suggest that many patterns may only be detectable with a level of repeated sampling that is possible for many behaviors (especially when collected autonomously), but that is currently not possible for most studies of endocrine flexibility. Second, and more fundamentally, these papers often focus on somewhat discrete measures of behavior (e.g., aggression score or activity level), whereas for acute glucocorticoid responses, the functional shape of the response itself may be the important trait and it may not be possible to summarize variation in the shape of the response with a single measure.
+
+The function valued trait (FVT) framework is an alternative approach that explicitly considers the functional shape of a biological response [@gomulkiewicz2018; @stinchcombe2012; @kingsolver2015]. While FVT approaches have been suggested for studies of endocrine flexibility [@taff2016], I am not aware of any papers that have applied this framework to empirical data on acute glucocorticoid responses, probably because sufficient data are not available. Conceptually, however, this approach is a better match to the acute glucocorticoid response, because the shape of a response curve is explicitly considered as the phenotypic trait of interest. In some cases, it may make sense to estimate particular parameters of the curve (e.g., maximum rate of increase and maximum value reached) and then treat those parameters as phenotypic values for downstream analysis, although statistical methods also exist to analyze the shape of the entire curve directly without the need to extract discrete parameters [@kingsolver2015]. This approach has been used to study a variety of phenotypes where values can be measured continuously or pooled across many individuals from the same group to accurately estimate the shape of a curve [see Table 1 in @stinchcombe2012]. Applying the technique to endocrine flexibility at the within-individual level faces the same empirical challenges described for within-individual reaction norms above. Note that FVT and within-individual reaction norms approaches are not necessarily incompatible, but they have largely developed separately.
+
+The recognition that characterizing the functional shape of an acute stress response is challenging goes back to the earliest studies conducted in wild animals. Early studies often employed various control groups and sampled individual animals at a variety of time points over a long period in order to describe the full response curve for a particular group [e.g., a species or a breeding stage, @wingfield1992]. These validations were considered essential to characterize key parameters of the acute response for each group being studied (i.e., baseline, rate of increase, maximum level, time of peak, and area under the curve; John Wingfield, personal communication). The challenge of estimating these parameters becomes much more difficult when trying to describe the response for an individual animal rather than for a group, because glucocorticoids can often only be measured at two or three time points and only a small number of times per animal [e.g., @vitousek2018]. Because these studies require an estimate for each individual, the solutions used by older studies that added additional animals to allow for sampling at more time points are not available.
+
+For individual based studies, the most common approach to this problem is to standardize measurements as much as possible by measuring animals at the same time of the day during the same context, and by taking blood samples at standard times (often <3 and 30 minutes after capture) to characterize baseline and stress-induced glucocorticoids. This standardization allows for comparison between individuals, but in some cases it may also completely obscure the ability to detect variation in certain characteristics of the acute response curve. For example, if the speed and scope (maximum value) of the acute response vary independently, samples taken at only two time points cannot accurately capture variation in either parameter. Indeed, several discussions in recent years about methods such as the '3 minute rule' and the relative merits of 'area under the curve' versus time point measures of glucocorticoids are fundamentally related to a recognition of the importance of understanding variation in the functional shape of stress responses and whether different components of that shape covary within individuals [e.g., @cockrem2002; @small2017].
+
+One of the characteristics of both the within-individual reaction norm and FVT literature is that empirical work has proceeded in very close coordination with simulation and statistical method development. In contrast, studies of endocrine flexibility often point to these methods, but don't address the ways that the particular logistical challenges of hormone measurement might suggest altered study designs. While many of the tools developed in these fields are transferable, studies of physiological flexibility would benefit from a focus on analysis development and testing that explicitly incorporates the particular details of these questions. One way to accomplish these goals is to use simulations, but to my knowledge no studies of physiological flexibility have developed simulations of the acute stress response that address the issues discussed above.
+
+Data simulation is a powerful approach for several reasons. Because true parameter values (e.g., maximum glucocorticoid level) are known, it is possible to evaluate how well different study designs and analytical choices perform in recovering true patterns and how sensitive those designs are to different assumptions. Thus, simulation can tell us whether the study designs we use can *in principle* detect the patterns we predict given realistic effect sizes. Simulated data can also identify conditions under which current study designs will perform well or poorly. For example, if simulations suggest that the baseline paired with stress-induced paradigm only works well when the speed and scope of responses are positively correlated, then empirical work could seek to determine the degree of correlation for a particular study system as justification for the approach. This ability to highlight key assumptions and create data sets with known properties has the ability to both provide insight into physiological flexibility directly and to guide empirical work by improving study design and identifying key areas for subsequent sampling. In the rest of this paper, I develop a simple simulation of acute physiological stress responses and then briefly illustrate several possible applications of the simulation. 
+
+## DESCRIPTION OF THE SIMULATION
+
+I developed a set of simulation functions in R version 4.0.2 [@rcore] to generate acute physiological response curves. This simulation makes no assumptions about the  mechanistic process that results in the shape of a glucocorticoid response. Rather, parameters are sampled to generate curves that are similar in shape and degree of variation to empirically observed responses (Figure 1). This simulation is designed to create data sets with realistic structure that can be used to better design and plan studies of physiological flexibility, to evaluate power of current study designs, and to evaluate the sensitivity of sampling regimes to any number of modifications to the shape of glucocorticoid response curves (e.g., changing covariation patterns between different features of the response). I explore a small number of scenarios in the next section, but I expect that many other scenarios can be addressed with these tools. For illustration purposes, I refer to simulated glucocorticoid responses, but the simulation applies equally well to any physiological mediator of a rapid response.
+
+![](concept.png)\
+
+***Figure 1.** Conceptual illustration of the structure of the simulation. For each simulated animal, seven parameters are sampled from a multivariate normal distribution. Together, these seven parameters define the turning points in an acute response curve. The mean and standard deviation for each parameter can be set along with the degree of covariation between each pair of parameters. Note that the simulation can easily be simplified as desired by setting some parameter mean or standard deviations to zero.*  
+     
+The simulation is constructed as two main functions with several minor functions for downstream analysis. I have included a detailed description of the functions and arguments in the appendix along with a full vignette detailing the process of specifying values for each function (https://github.com/cct663/speed_vs_scope). Briefly, function `cort_sim1` samples the parameters shown in Figure 1 from an arbitrary number of animals. These parameters are sampled from a multivariate normal distribution with user specified mean, variance, and covariance for each parameter. I consider these values to be the 'true', unobserved, phenotype of the animal (setting aside the question of whether or not a 'true' physiological phenotype exists). 
+
+A second function, `cort_sim2`, starts with a population of animals generated from `cort_sim1` and samples observed acute glucocorticoid responses an arbitrary number of times for each animal. Two sources of variation in the observed relative to true parameter values can be specified. First, within-individual variation in expression is represented by specifying what amount of variation in the observation of each parameter is determined by the true value and what amount is determined by an additional randomly sampled response, based on the population parameters (this additional sampling maintains the user specified covariance structure of the population). Second, additional noise can be added to all measurements to represent measurement error (e.g., assay error, inaccurate pipetting, etc). After sampling the parameters, values are interpolated for each one minute time point and a localized regression is fit to create a smoothed curve that represents the observed glucocorticoid response. 
+
+The function also generates a simulated performance (e.g., fitness) measure, based on the underlying true values. In addition to returning the full curve, a down sampled dataset is returned that retains measurements made only at the user specified fixed time points (e.g., only at 2 and 30 minutes, as is typical in many field based studies). Data generated from this function can then be used in downstream analyses with any standard statistical approaches or software. For example, a user could perform an analysis to ask whether a known relationship between fitness and a particular true parameter is recovered in an analysis that includes only measures taken at particular time points. An additional convenience function summarizes the output of a simulation run in a multi-panel plot (Figure 2).
+
+![](demo.png)\
+
+***Figure 2.** Example of simulation output with default settings. Panel A shows the down sampled data set for this run with samples collected at 1, 15, and 30 minutes in this case. Panel B shows the full observed response curve for each animal. Panel C shows the rank order of glucocorticoid level at each time point for each animal. In each panel, the vertical dashed lines represent the three time points that might have been measured in a typical empirical study.*
+
+Finally, given recent interest in estimating the repeatability of glucocorticoid regulation [@taff2018; @cockrem2013; @hau2016], I also included a function that takes input from `cort_sim2` and calculates the observed repeatability of several measures using package `rptR` [@stoffel2017]. Full details are included in the appendix, but this function returns repeatability for each individual time point specified in the down sampled data set, profile repeatability [@reed2019], and for area under the curve calculated as both increase (AUC~I~) and ground (AUC~G~) approaches [@pruessner2003]. For each AUC measure, I return repeatability for the full time course, for an estimate using only the observed values in the down sampled data set, and for the full data set constrained to the time period encompassing the observed data points. 
+
+## EXAMPLE APPLICATIONS OF SIMULATION
+
+The goal of this simulation is to provide a flexible tool that can produce realistic datasets of physiological flexibility for a variety of different systems and scenarios. As such, there are many possible applications and here I briefly highlight a few possibilities. These are by no means exhaustive, and I hope the simulation will be a useful tool to guide empirical work for specific hypotheses and study systems. Within each scenario, I have illustrated how the simulation functions might be used to address the particular question of interest, but I have not fully explored all the possible permutations of parameters systematically, because these will depend to a large extent on the empirical details of the system being studied.
+
+### *Simulating empirically parameterized data*
+
+
+
+### *Exploring covariance between response components*
+
+
+
+
+### *Comparing repeatability of different measures*
+
+
+
+
+### *Designing optimal sampling strategies*
+
+
+
+
+### *Detecting links between fitness and responses*
+
+
+
+
+## DISCUSSION
+
+
+More sophisticated simulations that incorporate mechanistic processes or other molecules or components of stress response system. 
+
+Empirical data is so limited and hard to collect, that it makes sense to proceed with simulations to guide and focus empirical work and to determine whether empirical study designs actually have the ability in principle to support hypotheses of interest given reasonable effect sizes. 
+
+Based on the brief scenarios developed above: 
+
+## ACKNOWLEDGEMENTS
+
+I would like to thank John Wingfield for discussions about the ideas presented in this project and for providing an insightful overview of the history of study design in field based studies of acute stress responses. I also thank Maren Vitousek and all members of the Vitousek Lab for feedback and discussion on early versions of this project. 
+
+## REFERENCES
+

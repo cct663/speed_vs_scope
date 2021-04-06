@@ -23,6 +23,7 @@
                                max_mu = log(45), max_sd = 0.21, 
                                maxtime_mu = 10, maxtime_sd = 3, maxtime_min = 5,
                                return_mu = 90, return_sd = 15, 
+                               extra_n = 500,
                                cor_base_speed = 0, cor_base_max = 0, cor_base_maxtime = 0, cor_base_return = 0, cor_base_slope = 0, cor_base_fastpct = 0,
                                cor_speed_max = 0, cor_speed_maxtime = 0, cor_speed_return = 0, cor_speed_slope = 0, cor_speed_fastpct = 0,
                                cor_max_maxtime = 0, cor_max_return = 0, cor_max_slope = 0, cor_max_fastpct = 0,
@@ -58,11 +59,11 @@
                       mu_list <- c(base_mu, speed_mu, max_mu, maxtime_mu, return_mu, slope_mu, fastpct_mu)
                   
                   # Create a dataset by sampling from a multivariate normal distribution
-                        msam <- mvrnorm(n, mu = mu_list, Sigma = cort_vcov)
+                        msam <- mvrnorm(n + extra_n, mu = mu_list, Sigma = cort_vcov)
                       
                       # Make a dataframe from the matrix above with columns named by paramter  
                         sim_dat <- data.frame(
-                          animal = paste("id", 1:n, sep = "_"),
+                          animal = paste("id", 1:(n + extra_n), sep = "_"),
                           base = msam[, 1],
                           tmax = msam[, 2],
                           max = exp(msam[, 3]) + msam[, 1],
@@ -87,24 +88,48 @@
                   
                   # Convert simulated data to long form x/y dataframe
                         sim_dat2 <- data.frame(
-                          animal = rep(sim_dat$animal, 5),
+                          animal = rep(sim_dat$animal[1:n], 5),
                           x = c(rep(0, n),
-                                sim_dat$slope,
-                                sim_dat$tmax,
-                                sim_dat$atmax + sim_dat$tmax,
-                                sim_dat$return),
-                          y = c(sim_dat$base,
-                                (sim_dat$max - sim_dat$base) * sim_dat$fastpct + sim_dat$base,
-                                sim_dat$max,
-                                sim_dat$max,
-                                sim_dat$base),
+                                sim_dat$slope[1:n],
+                                sim_dat$tmax[1:n],
+                                sim_dat$atmax[1:n] + sim_dat$tmax[1:n],
+                                sim_dat$return[1:n]),
+                          y = c(sim_dat$base[1:n],
+                                (sim_dat$max[1:n] - sim_dat$base[1:n]) * sim_dat$fastpct[1:n] + sim_dat$base[1:n],
+                                sim_dat$max[1:n],
+                                sim_dat$max[1:n],
+                                sim_dat$base[1:n]),
                           group = c(rep("initial", n),
                                     rep("slopeturn", n),
                                     rep("reachmax", n),
                                     rep("startdecline", n),
                                     rep("return", n))
                         )
-                        return(sim_dat2)
+                        
+                  # Make a data set of 'extra' response values that can be sampled from to add noise in second simulation
+                        sim_dat3 <- data.frame(
+                          animal = rep(sim_dat$animal[(n + 1):(n + extra_n)], 5),
+                          x = c(rep(0, extra_n),
+                                sim_dat$slope[(n + 1):(n + extra_n)],
+                                sim_dat$tmax[(n + 1):(n + extra_n)],
+                                sim_dat$atmax[(n + 1):(n + extra_n)] + sim_dat$tmax[(n + 1):(n + extra_n)],
+                                sim_dat$return[(n + 1):(n + extra_n)]),
+                          y = c(sim_dat$base[(n + 1):(n + extra_n)],
+                                (sim_dat$max[(n + 1):(n + extra_n)] - sim_dat$base[(n + 1):(n + extra_n)]) * sim_dat$fastpct[(n + 1):(n + extra_n)] + sim_dat$base[(n + 1):(n + extra_n)],
+                                sim_dat$max[(n + 1):(n + extra_n)],
+                                sim_dat$max[(n + 1):(n + extra_n)],
+                                sim_dat$base[(n + 1):(n + extra_n)]),
+                          group = c(rep("initial", extra_n),
+                                    rep("slopeturn", extra_n),
+                                    rep("reachmax", extra_n),
+                                    rep("startdecline", extra_n),
+                                    rep("return", extra_n))
+                        )
+                        
+                        dataset <- list(sim_dat2 = sim_dat2,
+                                        cort_vcov = cort_vcov,
+                                        extra_sims = sim_dat3)
+                        return(dataset)
       }
       
     # The second function takes input from the first function (or by default, generates a dataset with the first function).
@@ -119,26 +144,26 @@
           cort_sim2 <- function(data = cort_sim1(),
                                 bleed_times = c(1, 15, 30),  # Time in minutes to save 'bleed' samples at
                                 base_error = 0.8,            # Variation in base from 'true' value as a percentage of true value
-                                speed_error = 0.7,           # Variation in time to reach max from 'true value as percentage
-                                max_error = 0.7,             # Variation in max cort from 'true' value as percentage
-                                maxtime_error = 0.7,         # Variation in time at max cort from 'true' value as percentage
-                                return_error = 0.7,          # Variation in time to return to base from 'true' value as percentage
-                                slope_error = 0.7,           # Variation in length of fast slope initial increase from 'true' value as percentage
-                                fastpct_error = 0.7,         # Variation in percent of max reached during initial fast increase from 'true' as percentage
+                                speed_error = 0.6,           # Variation in time to reach max from 'true value as percentage
+                                max_error = 0.5,             # Variation in max cort from 'true' value as percentage
+                                maxtime_error = 0.5,         # Variation in time at max cort from 'true' value as percentage
+                                return_error = 0.5,          # Variation in time to return to base from 'true' value as percentage
+                                slope_error = 0.5,           # Variation in length of fast slope initial increase from 'true' value as percentage
+                                fastpct_error = 0.5,         # Variation in percent of max reached during initial fast increase from 'true' as percentage
                                 sample_times = 2,            # Number of samples to draw for each animal
-                                assay_error = 0.1,           # Measurement error after sampling as percent of value normal error mean = 0
+                                assay_error = 0.2,          # Measurement error after sampling as percent of value normal error mean = 0
                                 timecourse_max = 170,        # Number of minutes for the full time course
                                 performance_contributions = c(0, 0, 0, 0, 0, 1, 0, 1), 
                                         # Relative contributions of base, speed, max, maxtime, return, slope, fastpct, and random error to performance
-                                sm_span = 0.4              # Smoothing parameter for loess regression. Smaller = more wiggly.
+                                sm_span = 0.5              # Smoothing parameter for loess regression. Smaller = more wiggly.
                                 ) 
               {
             
             # Here is some ugly data wrangling that is just getting everything into the right format to proceed
                 # Increases length of the 'true' data to account for multiple samples taken from each individual animal
-                    data2 <- data[rep(seq_len(nrow(data)), sample_times), ]
+                    data2 <- data$sim_dat2[rep(seq_len(nrow(data$sim_dat2)), sample_times), ]
                 # Adds a column to identify sample number when animals are sampled more than once
-                    data2$sample <- rep(seq(1, sample_times, 1), each = nrow(data))
+                    data2$sample <- rep(seq(1, sample_times, 1), each = nrow(data$sim_dat2))
                 # Makes a new identifier that includes both animal id and sample number
                     data2$animal_sample <- paste(data2$animal, data2$sample, sep = "_")
                 # Pivots to a wide format with all paramters for each unique animal sample combination in one row
@@ -164,61 +189,94 @@
                     }
                 # Join performance measure back to the initial data frame
                     data2 <- plyr::join(data2, data3[, c("animal_sample", "performance")], "animal_sample", "left", "first")
+                    
+                    
             
             # Adding noise to 'true' values to represent within individual variation in response expression
                 # This is best thought of as within individual variation. It is set by changing the values to a percent of the observed value
                   # that is attributable to a random draw from the population distribution (error) and a percent that is attributable to the 
                   # true underlying value of the individual (1 - error).
+                    
+                  # Sample an 'extra' cort response curve to add noise from. This maintains the population level covariance structure and
+                    # means so that the parameters all vary together.
+                      id <- sample(unique(data$extra_sims$animal), sample_times * (nrow(data$sim_dat2) / 5))
+                      noise <- subset(data$extra_sims, data$extra_sims$animal %in% id)
+                    
+                    
                   # Noise for base cort
                     data2[which(data2$group == "initial"), "y"] <- (1 - base_error) * data2[which(data2$group == "initial"), "y"] +
-                      base_error * rnorm(n = length(data2[which(data2$group == "initial"), "y"]),
-                                         mean = mean(data2[which(data2$group == "initial"), "y"]),
-                                         sd = sd(data2[which(data2$group == "initial"), "y"]))
+                      base_error * noise[which(noise$group == "initial"), "y"]
+                      
+                    # Old version that didn't maintain correlation structure. Has been replaced.  
+                      #rnorm(n = length(data2[which(data2$group == "initial"), "y"]),
+                       #                  mean = mean(data2[which(data2$group == "initial"), "y"]),
+                         #                sd = sd(data2[which(data2$group == "initial"), "y"]))
                     
                   # Noise for speed to response
                     data2[which(data2$group == "slopeturn"), "x"] <- (1 - slope_error) * data2[which(data2$group == "slopeturn"), "x"] +
-                      slope_error * rnorm(n = length(data2[which(data2$group == "slopeturn"), "x"]),
-                                mean = mean(data2[which(data2$group == "slopeturn"), "x"]), 
-                                sd = sd(data2[which(data2$group == "slopeturn"), "x"]))
+                      slope_error * noise[which(noise$group == "slopeturn"), "x"]
+                      
+                        # Old version that didn't maintain correlation structure. Has been replaced.
+                            #rnorm(n = length(data2[which(data2$group == "slopeturn"), "x"]),
+                            #    mean = mean(data2[which(data2$group == "slopeturn"), "x"]), 
+                            #    sd = sd(data2[which(data2$group == "slopeturn"), "x"]))
                     
                   # noise for fast percent
                     data2[which(data2$group == "slopeturn"), "y"] <- (1 - fastpct_error) * data2[which(data2$group == "slopeturn"), "y"] +
-                      fastpct_error * rnorm(n = length(data2[which(data2$group == "slopeturn"), "y"]),
-                                            mean = mean(data2[which(data2$group == "slopeturn"), "y"]),
-                                            sd = sd(data2[which(data2$group == "slopeturn"), "y"]))
+                      fastpct_error * noise[which(noise$group == "slopeturn"), "y"]
+                      
+                            # Old version that didn't maintain correlation structure. Has been replaced.
+                                      #rnorm(n = length(data2[which(data2$group == "slopeturn"), "y"]),
+                                      #      mean = mean(data2[which(data2$group == "slopeturn"), "y"]),
+                                      #      sd = sd(data2[which(data2$group == "slopeturn"), "y"]))
 
                   # Noise for speed to reach maxcort
                     data2[which(data2$group == "reachmax"), "x"] <- (1 - speed_error) * data2[which(data2$group == "reachmax"), "x"] +
-                      speed_error * rnorm( n = length(data2[which(data2$group == "reachmax"), "x"]),
-                                           mean = mean(data2[which(data2$group == "reachmax"), "x"]),
-                                           sd = sd(data2[which(data2$group == "reachmax"), "x"]))
+                      speed_error * noise[which(noise$group == "reachmax"), "x"]
+                      
+                                # Old version that didn't maintain correlation structure. Has been replaced.
+                                      #rnorm( n = length(data2[which(data2$group == "reachmax"), "x"]),
+                                       #    mean = mean(data2[which(data2$group == "reachmax"), "x"]),
+                                        #   sd = sd(data2[which(data2$group == "reachmax"), "x"]))
                     
                   # Noise for maxcort
                     data2[which(data2$group == "reachmax"), "y"] <- (1 - max_error) * data2[which(data2$group == "reachmax"), "y"] +
-                      max_error * rnorm(n = length(data2[which(data2$group == "reachmax"), "y"]),
-                                        mean = mean(data2[which(data2$group == "reachmax"), "y"]),
-                                        sd = sd(data2[which(data2$group == "reachmax"), "y"]))
+                      max_error * noise[which(noise$group == "reachmax"), "y"]
+                                
+                                # Old version that didn't maintain correlation structure. Has been replaced.
+                                    #rnorm(n = length(data2[which(data2$group == "reachmax"), "y"]),
+                                    #    mean = mean(data2[which(data2$group == "reachmax"), "y"]),
+                                    #    sd = sd(data2[which(data2$group == "reachmax"), "y"]))
                         
                   # change start decline to match new max cort
                     data2[which(data2$group == "startdecline"), "y"] <- data2[which(data2$group == "reachmax"), "y"]
                     
                   # Noise for max time
                     data2[which(data2$group == "startdecline"), "x"] <- (1 - maxtime_error) * data2[which(data2$group == "startdecline"), "x"] +
-                      maxtime_error * rnorm(n = length(data2[which(data2$group == "startdecline"), "x"]),
-                                            mean = mean(data2[which(data2$group == "startdecline"), "x"]),
-                                            sd = sd(data2[which(data2$group == "startdecline"), "x"]))
+                      maxtime_error * noise[which(noise$group == "startdecline"), "x"]
+                      
+                              # Old version that didn't maintain correlation structure. Has been replaced.
+                                  #rnorm(n = length(data2[which(data2$group == "startdecline"), "x"]),
+                                   #         mean = mean(data2[which(data2$group == "startdecline"), "x"]),
+                                    #        sd = sd(data2[which(data2$group == "startdecline"), "x"]))
                       
                   # Noise for return
                     data2[which(data2$group == "return"), "x"] <- (1 - return_error) * data2[which(data2$group == "return"), "x"] +
-                      return_error * rnorm(n = length(data2[which(data2$group == "return"), "x"]),
-                                           mean = mean(data2[which(data2$group == "return"), "x"]),
-                                           sd = sd(data2[which(data2$group == "return"), "x"]))
+                      return_error * noise[which(noise$group == "return"), "x"]
+                      
+                                  # Old version that didn't maintain correlation structure. Has been replaced.
+                                        #rnorm(n = length(data2[which(data2$group == "return"), "x"]),
+                                         #  mean = mean(data2[which(data2$group == "return"), "x"]),
+                                          # sd = sd(data2[which(data2$group == "return"), "x"]))
                     
                   # noise for return basecort level
                     data2[which(data2$group == "return"), "y"] <- (1 - base_error) * data2[which(data2$group == "return"), "y"] +
-                      base_error * rnorm(n = length(data2[which(data2$group == "return"), "y"]),
-                                           mean = mean(data2[which(data2$group == "return"), "y"]),
-                                           sd = sd(data2[which(data2$group == "return"), "y"]))  
+                      base_error * noise[which(noise$group == "return"), "y"]
+                      
+                                # Old version that didn't maintain correlation structure. Has been replaced.
+                                      #rnorm(n = length(data2[which(data2$group == "return"), "y"]),
+                                       #    mean = mean(data2[which(data2$group == "return"), "y"]),
+                                        #   sd = sd(data2[which(data2$group == "return"), "y"]))  
                 
             # Make a time sequence with filler points every 5 minutes to make loess fit smoother. I did this because otherwise you end
                 # up with different length (of time) gaps on the x axis and the curves can fit in weird ways with certain parameters.
@@ -339,7 +397,7 @@
                                             levels = long_rank$animal_sample[1:n_s])
                 
             # True values
-                true <- as.data.frame(pivot_wider(data, names_from = group, values_from = c(x, y)))
+                true <- as.data.frame(pivot_wider(data$sim_dat2, names_from = group, values_from = c(x, y)))
                 true$baseline <- true$y_initial
                 true$slope <- true$x_slopeturn
                 true$fastpct <- (true$y_slopeturn - true$y_initial) / (true$y_reachmax - true$y_initial)
@@ -430,12 +488,12 @@
                 obs_AUC <- plyr::join(obs_AUC, true_tem, "animal", "left")
               
             # output all five dataframes plus the initial 'true' values
-              dataset <- list(simulated_dataset_long = preds2_long,
+              dataset2 <- list(simulated_dataset_long = preds2_long,
                               timecourse_long = pred_time_long,
                               rank_timecourse = long_rank,
                               AUC_measures = obs_AUC,
                               true_values = true)
-              return(dataset)
+              return(dataset2)
           }
           
     ## Repeatability functions
@@ -446,8 +504,8 @@
         # This is the main function that will calculate repeatability for several different AUCs and for each timepoint as well
           # as producing three plots that are saved in a list.
             cort_repeat <- function(data = cort_sim2(sample_times = 6),       # data input from cort simulation functions above
-                                    boots = 100,              # number of bootstraps for repeatability calculations
-                                    perms = 0                 # number of permutations for repeatability calculations; 0 = NA
+                                    boots = 100,                              # number of bootstraps for repeatability calculations
+                                    perms = 0                                 # number of permutations for repeatability calculations; 0 = NA
                                     )
               {
               
@@ -625,8 +683,8 @@
               geom_line(size = 0.5, alpha = 0.6, color = "coral3") +
               guides(color = FALSE) +
               theme_classic() + xlab("Time") + ylab("Corticosterone") + coord_cartesian(xlim = c(0, x_max)) +
-              ylim(0, y_max) +
-              geom_vline(xintercept = spoints, linetype = "dashed")
+              ylim(0, y_max) #+
+              #geom_vline(xintercept = spoints, linetype = "dashed")
             p
           }
 
@@ -701,14 +759,15 @@
     set.seed(165)
      sim_rwd <- cort_sim2(cort_sim1(
        n = 23,
-       base_mu = 4,
-       base_sd = 3,
-       slope_mu = 18,
-       slope_sd = 0.5,
-       fastpct_mu = 0.78,
-       max_mu = log(57),
-       max_sd = 0.36,
-       speed_mu = 60,
+       base_mu = 3.5,
+       base_sd = 3.5,
+       slope_mu = 17,
+       slope_sd = 0.7,
+       fastpct_mu = 0.7,
+       fastpct_sd = 0.03,
+       max_mu = log(56),
+       max_sd = 0.5,
+       speed_mu = 65,
        speed_sd = 5,
        return_mu = 120,
        maxtime_mu = 25,
@@ -779,3 +838,6 @@
        geom_smooth(method = "lm")
      
           
+     
+     
+     
