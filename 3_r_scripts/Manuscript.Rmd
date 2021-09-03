@@ -6,14 +6,14 @@ header-includes:
   - \usepackage[font={footnotesize}, labelfont={bf}]{caption}
 fontsize: 12pt
 output: 
-  bookdown::pdf_document2:
-      number_sections: FALSE
-      toc: FALSE
-      extra_dependencies: ["flafter"]
   bookdown::word_document2:
       number_sections: FALSE
       toc: FALSE
       extra_dependcies: ["flafter"]
+  bookdown::pdf_document2:
+      number_sections: FALSE
+      toc: FALSE
+      extra_dependencies: ["flafter"]
 bibliography: references.bib
 csl: animal-behaviour.csl
 ---
@@ -729,50 +729,49 @@ The fact that low between-individual variation in maximum glucocorticoids makes 
 
 ### *Designing optimal sampling strategies*
 
-One of the major benefits of simulating glucocorticoid response curves will be the ability to design optimal sampling strategies before data are collected. A simulation can be constrained to match any real world limitations (e.g., maximum number of samples possible per individual) and then explored to determine how to best allocate sampling resources. The specifics of this task will vary considerably with the study system and question being addressed, but here I illustrate one possible application. Consider an experiment in which the acute glucocorticoid response of a treatment group and control group are compared after some experimental manipulation. The details of the manipulation are unimportant here, but suppose that the prediction is that this manipulation should result in a difference in the speed of the corticosterone response between our two groups, such that the treatment group will reach it's maximum glucocorticoid value faster than the control group, but will not differ in the maximum value itself (figure \@ref(fig:prediction-ex)). 
+One of the major benefits of simulating glucocorticoid response curves will be the ability to design optimal sampling strategies before data are collected. A simulation can be constrained to match any real world limitations (e.g., maximum number of samples possible per individual) and then explored to determine how to best allocate sampling resources. The specifics of this task will vary considerably with the study system and question being addressed, but here I illustrate one possible application. Consider an experiment in which the acute glucocorticoid response of a treatment group and control group are compared after some experimental manipulation. The details of the manipulation are unimportant here, but suppose that the prediction is that this manipulation should result in a difference in the speed of the corticosterone response between our two groups, such that the treatment group will reach it's maximum glucocorticoid value faster than the control group, but will not differ in the maximum value itself. I have implemented this difference by simulating two populations in which the treatment group has a steeper initial slope and also reaches the maximum value faster (figure \@ref(fig:prediction-ex)). 
 
-For constraints, we can only sample a maximum of 20 individuals per group, we can only sample each individual once post-treatment, and during that single sampling event we can take a blood sample at a maximum of two different time points, resulting in a total of 40 data points per treatment group. Given these constraints, we can design a simulation to ask how well several different sampling schemes will perform in estimating the shape of the response curve for each group. I compare three different sampling designs: i) a study in which every animal is sampled at 1 minute and at 30 minutes, ii) a study in which two sampling times between 1 and 60 minutes are randomly chosen for every animal, iii) a study in which sampling times are randomly chosen for each animal, but weighted more heavily around 30 minutes, which is the expected average maximum glucocorticoid time. In the random sampling schemes, I constrain the randomization so that two samples from the same animal must be taken at least 5 minutes apart. To evaluate the performance of these sampling schemes, I simulated each one 50 times and fit a generalized additive model for each simulation with glucocorticoid level as the response and a treatment by smoothed time interaction as a predictor. Using the fit models, I asked how well each scheme estimated the time of maximum glucocorticoid and also how well the entire shape of the glucocorticoid response between 0 and 60 minutes was estimated.
+```{r prediction-ex, echo = FALSE, fig.height = 3.5, fig.width = 5, fig.pos = "!ht", fig.align = "center", message = FALSE, warning = FALSE, fig.cap = "Simulated data for a hypothetical control (blue) and treatment (orange) group. Faded thin lines show the acute response for each individual simulated (20 per group) and thick lines show the average response curve for each group."}
 
+# set.seed(295)
+# 
+# # Simulate group A
+#         sim_grpa <- cort_sim2(cort_sim1(
+#        n = 20,
+#        slope_mu = 9,
+#        fastpct_mu = 0.7,
+#        max_sd = 0.14,
+#        speed_mu = 20,
+#        speed_sd = 4
+#      ),
+#      sample_times = 1,
+#      sm_span = 0.2,
+#      bleed_times = seq(1, 60, 1))
+# 
+# # Simulate group B
+#         sim_grpb <- cort_sim2(cort_sim1(
+#        n = 20,
+#        slope_mu = 11,
+#        fastpct_mu = 0.55,
+#        max_sd = 0.14,
+#        speed_mu = 32,
+#        speed_sd = 4
+#      ),
+#      sample_times = 1,
+#      sm_span = 0.2,
+#      bleed_times = seq(1, 60, 1))
+# 
+# # Combine the two datasets
+#       sim_grpa$timecourse_long$type <- "Treatment"
+#       sim_a2 <- sim_grpa$timecourse_long[, c("animal_sample", "time", "cort", "type")]
+#       sim_grpb$timecourse_long$type <- "Control"
+#       sim_b2 <- sim_grpb$timecourse_long[, c("animal_sample", "time", "cort", "type")]
+# 
+#       comp_sim2 <- rbind(sim_a2, sim_b2)
 
-
-```{r prediction-ex, echo = FALSE, fig.height = 8, fig.width = 8, fig.pos = "!ht", fig.align = "center", message = FALSE, warning = FALSE, fig.cap = "caption"}
-
-set.seed(295)
-
-# Simulate group A
-        sim_grpa <- cort_sim2(cort_sim1(
-       n = 20,
-       slope_mu = 9,
-       fastpct_mu = 0.7,
-       max_sd = 0.14,
-       speed_mu = 20,
-       speed_sd = 4
-     ), 
-     sample_times = 1,
-     sm_span = 0.2,
-     bleed_times = c(2, 30))         
-     
-# Simulate group B
-        sim_grpb <- cort_sim2(cort_sim1(
-       n = 20,
-       slope_mu = 11,
-       fastpct_mu = 0.55,
-       max_sd = 0.14,
-       speed_mu = 32,
-       speed_sd = 4
-     ), 
-     sample_times = 1,
-     sm_span = 0.2,
-     bleed_times = c(2, 30))      
-
-# Combine the two datasets
-      sim_grpa$timecourse_long$type <- "Treatment"
-      sim_a2 <- sim_grpa$timecourse_long[, c("animal_sample", "time", "cort", "type")]
-      sim_grpb$timecourse_long$type <- "Control"
-      sim_b2 <- sim_grpb$timecourse_long[, c("animal_sample", "time", "cort", "type")]
-     
-      comp_sim2 <- rbind(sim_a2, sim_b2)
-        
+# save group and read it in
+      #saveRDS(comp_sim2, here::here("5_other_outputs/comp_sim2.rds"))
+      comp_sim2 <- readRDS(here::here("5_other_outputs/comp_sim2.rds"))
      
      p1 <- ggplot(comp_sim2, mapping = aes(x = time, y = cort, by = animal_sample, color = type)) +
        geom_line(alpha = 0.3, size = 0.7) +
@@ -786,65 +785,111 @@ set.seed(295)
        geom_smooth(se = FALSE, size = 1.5, mapping = aes(by = type, color = type)) +
        theme(legend.title = element_blank())
      
+     p1
+   
+
+```
+
+Next, we can ask how well different study designs can detect this difference. Here we can impose any logistical constraints relevant to the study system. As an example, in this case we can only sample a maximum of 20 individuals per group, we can only sample each individual once post-treatment, and during that single sampling event we can take a blood sample at a maximum of two different time points, resulting in a total of 80 data points. Given these constraints, I compare three different sampling designs: i) a study in which every animal is sampled at 1 minute, 30 minutes, and 60 minutes, ii) a study in which two sampling times between 1 and 60 minutes are randomly chosen for every animal, iii) a study in which two sampling times are randomly chosen for each animal, but weighted more heavily around the range of times when maximum levels are expected to be reached for the population. Note that the first sampling scheme closely mirrors the most common empirical design and in this case I have allowed an extra, third sample at 60 minutes, such that it includes 120, rather than 80, data points. For illustration purposes I sampled directly from the 'true' response curves in this example so that there is no additional measurement error added. To evaluate these schemes I compare estimates of the acute response curve for each group to the 'true' known curves shown in figure \@ref(fig:prediction-ex). Note that a more complete analysis of a sampling schemes performance should include many more iterations and full statistical comparisons, but the details here will be highly dependent on the study system and goals, so I provide this simple example to illustrate the approach rather than to make any more widely applicable conclusions.
+
+```{r treatment-ex, echo = FALSE, fig.height = 2.8, fig.width = 7.3, fig.pos = "!ht", fig.align = "center", message = FALSE, warning = FALSE, fig.cap = "Three possible sampling schemes to compare two groups. For standard sampling (A), every individual is sampled at exactly 2, 30, and 60 minutes. For random sampling (B) each individual is sampled at two random points between 1 and 60 minutes. For weighted sampling (C) two sampling times are chosen for each individual from a normal distribution with mean of 32 and sd of 9 minutes. In all three panels, solid lines are the true group averages, dashed lines are the estimates based on samples, and points are individual samples collected."}
+
+# save group and read it in
+    set.seed(61)
+      #saveRDS(comp_sim2, here::here("5_other_outputs/comp_sim2.rds"))
+      comp_sim2 <- readRDS(here::here("5_other_outputs/comp_sim2.rds"))
      
-      sim_grpa$true_values$type <- "Treatment"
-      sim_a22 <- sim_grpa$true_values[, c("baseline", "slope", "fastpct", "speed", "max", "atmax", "type")]
-      sim_grpb$true_values$type <- "Control"
-      sim_b22 <- sim_grpb$true_values[, c("baseline", "slope", "fastpct", "speed", "max", "atmax", "type")]
-     
-      comp_sim3 <- rbind(sim_a22, sim_b22)
-      comp_sim4 <- pivot_longer(comp_sim3, cols = c("baseline", "slope", "fastpct", "speed", "max", "atmax"), names_to = "trait", values_to = "value")
-     
-      ggplot(comp_sim4, mapping = aes(x = type, y = value, color = type, fill = type)) +
-        geom_boxplot(alpha = 0.5) +
-        scale_color_manual(values = c("slateblue", "orange")) +
-       scale_fill_manual(values = c("slateblue", "orange")) +
-        facet_wrap(~ trait, nrow = 1, scales = "free") +
-        xlab("") +
-        theme_bw() +
-        theme(axis.text.x = element_blank())
-      
-     p2 <- ggplot(comp_sim2, mapping = aes(x = time, y = cort, color = type, fill = type)) +
-       geom_smooth() +
-       theme_classic() + 
-       coord_cartesian(xlim = c(0, 60), ylim = c(0, 125)) +
+     p1 <- ggplot(comp_sim2, mapping = aes(x = time, y = cort, by = animal_sample, color = type)) +
+       theme_classic() +
+       coord_cartesian(xlim = c(0, 60), ylim = c(0, 75)) +
        xlab("Time (minutes)") + ylab("Corticosterone (ng/\U00B5l)") +
        scale_color_manual(values = c("slateblue", "orange")) +
+       guides(color = "none") +
+       theme(axis.title = element_text(size = 14)) +
+       geom_smooth(se = FALSE, size = 1.1, mapping = aes(by = type, color = type)) +
+       theme(legend.title = element_blank())
+     
+# sampling scheme 1
+     dd1 <- subset(comp_sim2, comp_sim2$time == 1 | comp_sim2$time == 30 | comp_sim2$time == 60)
+     
+     p1a <- p1 +
+       #geom_line(data = dd1, linetype = "dashed", size = 1.1, mapping = aes(x = time, y = cort, by = type, color = type)) +
+       geom_smooth(data = dd1, mapping = aes(x = time, y = cort, by = type, color = type, fill = type), linetype = "dashed") +
        scale_fill_manual(values = c("slateblue", "orange")) +
-       theme(legend.position = c(0.7, 0.15), axis.title = element_text(size = 14)) +
-       guides(color = guide_legend(title = ""), fill = guide_legend(title = "")) +
-       annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B")
-
-      ggpubr::ggarrange(p1, p2, nrow = 1) 
+       annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A") +
+       guides(fill = "none") +
+       geom_point(data = dd1, mapping = aes(x = time, y = cort, color = type, fill = type), alpha = 0.6) +
+       ggtitle("Standard sampling")
+     
+# sampling scheme 2
+     dd2 <- data.frame(animal_sample = NA, time = NA, cort = NA, type = NA, an2 = NA)
+     comp_sim2$an2 <- paste(comp_sim2$animal_sample, comp_sim2$type, sep = "_")
+     ans <- data.frame(animal_sample = unique(comp_sim2$an2))
+     cs2 <- subset(comp_sim2, comp_sim2$time > 0 & comp_sim2$time < 61)
+     for(i in 1:nrow(ans)){
+       sub <- subset(cs2, cs2$an2 == ans$animal_sample[i])
+       subs <- sub[sample(seq(1, 60, 1), 2, replace = FALSE), ]
+       dd2 <- rbind(dd2, subs)
+     }
+     dd2 <- subset(dd2, is.na(dd2$an2) == FALSE)
+     
+     p1b <- p1 +
+       #geom_line(data = dd2, linetype = "dashed", size = 1.1, mapping = aes(x = time, y = cort, by = type, color = type)) +
+       geom_smooth(data = dd2, mapping = aes(x = time, y = cort, by = type, color = type, fill = type), linetype = "dashed") +
+       scale_fill_manual(values = c("slateblue", "orange")) +
+       annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B") +
+       guides(fill = "none") +
+       ylab("") +
+       geom_point(data = dd2, mapping = aes(x = time, y = cort, color = type, fill = type), alpha = 0.6) +
+       ggtitle("Random sampling")
+     
+# sampling scheme 3
+     dd3 <- data.frame(animal_sample = NA, time = NA, cort = NA, type = NA, an2 = NA)
+     comp_sim2$an2 <- paste(comp_sim2$animal_sample, comp_sim2$type, sep = "_")
+     ans <- data.frame(animal_sample = unique(comp_sim2$an2))
+     cs2 <- subset(comp_sim2, comp_sim2$time > 0 & comp_sim2$time < 61)
+     for(i in 1:nrow(ans)){
+       choose <- round(rnorm(2, 32, 9))
+       sub <- subset(cs2, cs2$an2 == ans$animal_sample[i])
+       subs <- sub[choose, ]
+       dd3 <- rbind(dd3, subs)
+     }
+     dd3 <- subset(dd3, is.na(dd3$an2) == FALSE)
+     
+     p1c <- p1 +
+       #geom_line(data = dd3, linetype = "dashed", size = 1.1, mapping = aes(x = time, y = cort, by = type, color = type)) +
+       geom_smooth(data = dd3, mapping = aes(x = time, y = cort, by = type, color = type, fill = type), linetype = "dashed", span = 0.9) +
+       scale_fill_manual(values = c("slateblue", "orange")) +
+       scale_color_manual(values = c("slateblue", "orange")) +
+       annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "C") +
+       #theme(legend.position = c(.6, .2)) +
+       guides(fill = "none") +
+       ylab("") +
+       geom_point(data = dd3, mapping = aes(x = time, y = cort, color = type, fill = type), alpha = 0.6) +
+       ggtitle("Weighted sampling")
+     
+     
+     ggpubr::ggarrange(p1a, p1b, p1c, nrow = 1)
 
 ```
 
-```{r treatment-ex, echo = FALSE, fig.height = 8, fig.width = 8, fig.pos = "!ht", fig.align = "center", message = FALSE, warning = FALSE, fig.cap = "caption"}
+In this case, the standard sampling scheme performs poorly (figure \@ref(fig:treatment-ex) A), with no differences detectable between the two groups, despite the fact that the treatment group reaches it's maximum value on average 12 minutes (~40%) faster than the control group. In contrast, both the random sampling and weighted sampling schemes detect differences in the shape of the acute response (figure \@ref(fig:treatment-ex) B & C). In this particular scenario, there is no clear difference between these two approaches. A few clear takeaways can be derived from these results. First, while strict standardization of the timing of samples has some clear advantages, it also comes with costs and likely makes it nearly impossible to detect certain types of variation between groups or individuals. In this case, standardized sampling performed much worse than the other two approaches despite the fact that the analysis included 50% more data and it should be clear that no amount of additional sampling would allow that approach to detect the differences between these groups. Second, while it may be very difficult to accurately estimate the full shape of the acute stress response for *individuals*, the sampling schemes shown here demonstrate that it should be possible to describe these shapes accurately for groups (e.g., treatments, species, different contexts) even without extraordinarily large sample sizes. A similar argument about the power of randomly timed sampling has been put forward in the function valued trait literature [CITE], but this type of sampling scheme is rarely used in evolutionary endocrinology research.
 
-```
+This simulation is particular to a single very specific scenario, but a similar scenario could be designed for any number of studies and any number of predictions about how the speed, scope, or other attributes of the glucocorticoid response are expected to change with a treatment or between different groups or species. Clearly, when estimating the timing of peak glucocorticoids, a simple baseline plus induced sampling scheme is sub optimal, but this scheme may be perform well in other situations where the maximum value is the target and there is relatively little variation in response time. Creating simulations like this before studies are conducted has the potential increase the efficient use of researches time and funds, but also forces researches to think explicitly about quantitative predictions ahead of time. These simulations could be included as part of a study pre-registration, grant application, or registered report to demonstrate exactly what data collection and analysis approaches are planned and to justify those decisions. 
 
+## CONCLUSION 
 
-This simulation is particular to the specific scenario, but a similar scenario could be designed for any number of studies and any number of predictions about how the speed, scope, or other attributes of the glucocorticoid response are expected to change with a treatment. Clearly, when estimating the timing of peak glucocorticoids, a simple baseline plus induced sampling scheme is sub optimal, but this scheme may be perform well in other situations where the maximum value is the target and there is relatively little variation in response time. Creating simulations like this before studies are conducted has the potential increase the efficient use of researches time and funds, but also forces researches to think explicitly about quantitative predictions ahead of time. These simulations could be included as part of a study pre-registration, grant application, or registered report to demonstrate exactly what data collection and analysis approaches are planned and to justify those decisions. 
+While there has been increasing interest in understand within- and between-individual variation in the acute glucocorticoid response in recent years [CITE], the methods and data available to tackle these questions have changed relatively little. Many sophisticated statistical tools are now available and clear arguments have been made about the need to apply these approaches to endocrine traits [CITE]. Arguably, the biggest roadblock at the moment is the limited availability of empirical data needed to test these ideas. Simulation offers one way forward, by allowing for more efficiently designed studies and by allowing researches to identify when the question of interest can *in principle* be answered with a given study design. Ideally, conceptual papers, empirical work, and simulation will proceed together to make progress in this field. The tools presented here only scratch the surface of the ways that data simulation can be applied to address pressing questions in evolutionary endocrinology.
 
-## DISCUSSION 
+Nevertheless, even the simple demonstrations included in this paper suggest several ways that simulation could help move the field forward. One of the main benefits of simulating datasets is identifying unmeasured properties and assumptions of currently available data that can become targets for empirical work. For example, I demonstrated that the covariation between different components of the acute stress resopnse and the relative amount of variation in each of these can have profound effects on the ability to accurately measure any single component. Empirical work specifically designed to assess covariation and variance at different times could help to understand what conclusions we can reasonably draw from available data. One takeaway from these simulations is that variation in glucocorticoid-fitness relationships across seasons or life history stages can easily arise as a statistical artefact when between-individual variation in hormones also varies across the contexts. My study design example also suggests that there are potentially gains to be made by considering more diverse sampling designs tailored to the particular research question and study system. While standardized sample collection timing has been productive in this field, it also creates clear blind spots to certain types of variation between groups.
 
+In addition to providing insight in its own right, simulation has great potential to hone the design of future empirical studies by allowing for a principled analysis of various study design options and choices before costly data are collected and before animals are needlessly disturbed. For example, I showed that one of the most common sampling design schemes has essentially no ability to detect a difference in the speed of increase between two groups if they do not also differ in maximum values. It is perhaps not surprising to find that there is little published evidence for differences in the speed of the acute response when most data sampled to date cannot detect those differences. Across a wide range of disciplines there has been an increasing push for pre-registration, reproducible research, and transparent research practices [CITE]. Simulation provides an opportunity for evolutionary endocrinologists to embrace these best practices by improving the quality of study design, allowing for more quantitative hypotheses and predictions, and providing a clear justification for experimental choices. 
 
-
-More sophisticated simulations that incorporate mechanistic processes or other molecules or components of stress response system. 
-
-Empirical data is so limited and hard to collect, that it makes sense to proceed with simulations to guide and focus empirical work and to determine whether empirical study designs actually have the ability in principle to support hypotheses of interest given reasonable effect sizes. 
-
-How to interpret some of the empirical studies that are published in light of simulations?
-
-More focus on measuring characteristics of the response other than just base/stress for all individuals. Group comparisons with treatments could look at shape changes.
-
-Based on the brief scenarios developed above: 
-
-Goal is for this to be a pretty short section highlighting some main insights from above examples and other ways simulations could be used.
+This package and paper is meant only as a very cursory exploration of the ways that simulation can be applied to evolutionary endocrinology. I have no doubt that many more scenarios and complications could be added on to each of the simple examples presented here. Furthermore, there is ample room to create more sophisticated simulations that incorporate realistic mechanistic processes or interactions with other molecules and other components of the stress response system. I hope that this work will be a starting point to build and improve on as we work to understand the importance of variation in these flexible response systems.
 
 ## ACKNOWLEDGEMENTS
 
-I would like to thank John Wingfield for discussions about the ideas presented in this project and for providing an insightful overview of the history of study design in field based studies of acute stress responses. I also thank members of the Vitousek Lab for feedback and discussion on early versions of this project. 
+I would like to thank Michaela Hau and her lab along with John Wingfield for discussions about the ideas presented in this project. John Wingfield also provided an insightful overview of the history of study design in field based studies of acute stress responses. Finally, I thank Maren Vitousek and her lab members for feedback and discussion on early versions of this project. 
 
 ## REFERENCES
 
