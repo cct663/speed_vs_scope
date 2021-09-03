@@ -6,14 +6,14 @@ header-includes:
   - \usepackage[font={footnotesize}, labelfont={bf}]{caption}
 fontsize: 12pt
 output: 
-  bookdown::word_document2:
-      number_sections: FALSE
-      toc: FALSE
-      extra_dependcies: ["flafter"]
   bookdown::pdf_document2:
       number_sections: FALSE
       toc: FALSE
       extra_dependencies: ["flafter"]
+  bookdown::word_document2:
+      number_sections: FALSE
+      toc: FALSE
+      extra_dependcies: ["flafter"]
 bibliography: references.bib
 csl: animal-behaviour.csl
 ---
@@ -25,7 +25,7 @@ pacman::p_load(ggplot2, here, MASS, MBESS, tidyverse, viridis, gridExtra, rptR, 
 
 ## ABSTRACT
 
-Wild animals often experience unpredictable challenges that demand rapid and flexible responses. The glucocorticoid mediated stress response is one of the major systems that allows vertebrates to rapidly adjust their physiology and behavior. Given it's role in responding to challenges, evolutionary physiologists have focused on the consequences of between-individual and, more recently, within-individual variation in the acute glucocorticoid response. Although sophisticated approaches are available to partition this variation statistically, empirical studies of physiological flexibility are severely limited by the logistical challenges of measuring the same animal multiple times during a single acute response or across multiple instances of acute responses. Empiricists have largely adopted the strategy of standardizing sampling as much as possible to allow for comparison between individuals, but this standardization also makes it very difficult to detect certain types of variation in the functional shape of acute response curves. Data simulation is a powerful approach when empirical data are limited, but has not been adopted to date in studies of physiological flexibility. In this paper, I describe the `simcoRt` package, which includes functions that can generate realistic acute glucocorticoid response data with user specified characteristics. Simulated animals can be sampled continuously through an acute response and across as many separate responses as desired, while varying key parameters (e.g., the degree of correlation between the speed and scope of a response). Using this simulation, I explore several possible scenarios to highlight areas where simulation might either provide new insight into physiological flexibility directly or aid in designing empirical studies that are better able to test the hypotheses of interest. The package includes a vignette with details on use and code to reproduce all of the examples explored in this paper.
+Wild animals often experience unpredictable challenges that demand rapid and flexible responses. The glucocorticoid mediated stress response is one of the major systems that allows vertebrates to rapidly adjust their physiology and behavior. Given it's role in responding to challenges, evolutionary physiologists have focused on the consequences of between-individual and, more recently, within-individual variation in the acute glucocorticoid response. Although sophisticated approaches are available to partition this variation statistically, empirical studies of physiological flexibility are severely limited by the logistical challenges of measuring the same animal multiple times during a single acute response or across multiple instances of acute responses. Empiricists have largely adopted the strategy of standardizing sampling as much as possible to allow for comparison between individuals, but this standardization also makes it very difficult to detect certain types of variation in the functional shape of acute response curves. Data simulation is a powerful approach when empirical data are limited, but has not been adopted to date in studies of physiological flexibility. In this paper, I describe the `simcoRt` package, which includes functions that can generate realistic acute glucocorticoid response data with user specified characteristics. Simulated animals can be sampled continuously through an acute response and across as many separate responses as desired, while varying key parameters (e.g., the degree of correlation between the speed and scope of a response). Using this simulation, I explore several possible scenarios to highlight areas where simulation might either provide new insight into physiological flexibility directly or aid in designing empirical studies that are better able to test the hypotheses of interest. All of the code required to reproduce the examples presented here is included in a public GitHub repository.
 
 ## INTRODUCTION
 
@@ -61,7 +61,7 @@ knitr::include_graphics("concept.png")
 
 ```
      
-The simulation is constructed as two main functions with several minor functions for downstream analysis. Detailed descriptions of the arguments to each function and a full vignette are included with the package documentation. Briefly, function `cort_sim1` samples the parameters shown in Figure \@ref(fig:concept-fig) from an arbitrary number of animals. These parameters are sampled from a multivariate normal distribution with user specified mean, variance, and covariance for each parameter. I consider these values to be the 'true', unobserved, phenotype of the animal (setting aside the question of whether or not a 'true' physiological phenotype exists). 
+The simulation is constructed as two main functions with several minor functions for downstream analysis. Detailed descriptions of the arguments to each function are included with the package documentation. Briefly, function `cort_sim1` samples the parameters shown in Figure \@ref(fig:concept-fig) from an arbitrary number of animals. These parameters are sampled from a multivariate normal distribution with user specified mean, variance, and covariance for each parameter. I consider these values to be the 'true', unobserved, phenotype of the animal (setting aside the question of whether or not a 'true' physiological phenotype exists). 
 
 A second function, `cort_sim2`, starts with a population of animals generated from `cort_sim1` and samples observed acute glucocorticoid responses an arbitrary number of times for each animal. Two sources of variation in the observed relative to true parameter values can be specified. First, within-individual variation in expression is represented by specifying what amount of variation in the observation of each parameter is determined by the true value and what amount is determined by an additional randomly sampled response, based on the population parameters (this additional sampling maintains the user specified covariance structure of the population). After sampling the parameters, values are interpolated for each one minute time point and a localized regression is fit to create a smoothed curve that represents the observed glucocorticoid response. From this expressed response, individual data points are then collected at user specified times that would reflect an empirical study design (e.g., 2, 30, and 60 minutes). Additional noise is added to these data points to represent measurement error (e.g., assay error).
 
@@ -79,72 +79,82 @@ Finally, given recent interest in estimating the repeatability of glucocorticoid
 
 ## EXAMPLE APPLICATIONS OF SIMULATION
 
-The goal of this simulation is to provide a flexible tool that can produce realistic datasets of physiological flexibility for a variety of different systems and scenarios. As such, there are many possible applications and here I briefly highlight a few possibilities. These are by no means exhaustive, and I hope the simulation will be a useful tool to guide empirical work for specific hypotheses and study systems. Within each scenario, I have illustrated how the simulation functions might be used to address the particular question of interest, but I have not fully explored all the possible permutations of parameters systematically, because these will depend to a large extent on the empirical details of the system being studied.
+The goal of this simulation is to provide a flexible tool that can produce realistic datasets of physiological flexibility for a variety of different systems and scenarios. As such, there are many possible applications and here I briefly highlight a few possibilities. These are by no means exhaustive, and I hope the simulation will be a useful tool to guide empirical work for specific hypotheses and study systems. Within each scenario, I have illustrated how the simulation functions might be used to address the particular question of interest, but I have not fully explored all the possible permutations of parameters systematically, because these will depend to a large extent on the empirical details of the system being studied. A complete set of reproducible code to create all of the examples presented in this paper is available on GitHub (https://github.com/cct663/speed_vs_scope).
 
 ### *Simulating empirically parameterized data*
 
 In order for simulation to be useful, we should be able to create artificial datasets that have similar characteristics to empirical data for different systems. Simulating realistic data provides a starting point for evaluating different study designs and the consequences of changes in different assumptions or parameters. Simulating realistic data is also useful because it can aid in study design or be used as a basis for pre-registered reports that demonstrate the feasibility of a planned study before data are ever collected. Simulated data can be created and entered in a complete analysis pipeline, with empirical data substituted later. In addition to helping to design better studies, this approach has the advantage of increasing the transparency and reliability for studies of physiological flexibility, by making analysis choices and predictions clear before data are collected.
 
-Here, I compare simulated data to an empirical dataset from red-winged blackbirds (*Agelaius phoeniceus*) to demonstrate how `simcoRt` can create synthetic datasets similar to observed data. This dataset is included in the `simcoRt` package and is fully described in the documentation. Briefly, acute glucocorticoid responses were measured using a 7-point sampling scheme, with corticosterone measured at 1, 3, 7, 15, 30, 45, and 60 minutes post capture. I simulated data using the functions described above starting with the input values calculated directly from the empirical data. The simulation creates a new dataset that has similar variation and patterns to empirical data (Figure \@ref(fig:rwbb-demo)A) along with a population wide corticosterone response curve shape that closely matches the empirical data (Figure \@ref(fig:rwbb-demo)B). In this case, the plotted simulation data include the same number of animals sampled at the same time points as the empirical data, but these sampling points and total sample size can easily be changed as desired. The parameterized simulation can now be used to test the sensitivity of any number of experimental designs before additional data is collected.
-
-```{r rwbb-demo, echo = FALSE, fig.height = 3.5, fig.width = 8, message = FALSE, warning = FALSE, fig.cap = "Panel A shows the acute corticosterone response for measured (blue) or simulated (orange) red-winged blackbirds measured at seven time points. Panel B shows the mean and standard error of the two datasets."}
-      rwde <- subset(rwbb, rwbb$lh_stg == "early-breeding")  
-      rwde <- subset(rwde, rwde$id != "452")   # This one has an unusually high cort response
-    set.seed(165)
-        sim_rwd <- cort_sim2(cort_sim1(
-       n = 23,
-       base_mu = 3.5,
-       base_sd = 3.5,
-       slope_mu = 17,
-       slope_sd = 0.7,
-       fastpct_mu = 0.7,
-       fastpct_sd = 0.03,
-       max_mu = log(56),
-       max_sd = 0.5,
-       speed_mu = 65,
-       speed_sd = 5,
-       return_mu = 120,
-       maxtime_mu = 25,
-       cor_max_slope = -0.7
-     ), 
-     sample_times = 1,
-     bleed_times = c(1, 3, 8, 15, 30, 45, 60),
-     assay_error = 0.2,
-     sm_span = 0.2)         
+```{r kool-demo, echo = FALSE, fig.height = 3.5, fig.width = 8, message = FALSE, warning = FALSE, fig.cap = "Panel A shows the acute corticosterone response for measured (blue) or simulated (orange) rats measured at five time points. Panel B shows the mean and standard error of the two datasets. Empirical data are extracted from Koolhaas et al. 2010 Figure 6 using the WebPlotDigitizer tool."}
+     # Load and set up data from Koolhaas et al 2010
+#   kool <- read.delim(here::here("1_raw_data/koolhaas_2010_figure6_data.txt"))
+#   kool <- subset(kool, kool$time > -2)
+#   kool$type <- "Koolhaas et al. 2010"
+# 
+# # Create simulated dataset with similar characteristics  
+#     set.seed(175)
+#           sim_kool <- cort_sim2(cort_sim1(
+#            n = 14,
+#            base_mu = 11.6,
+#            base_sd = 3.65,
+#            slope_mu = 3.5,
+#            slope_sd = 0.9,
+#            fastpct_mu = 0.9,
+#            fastpct_sd = 0.1,
+#            max_mu = log(24),
+#            max_sd = 0.1,
+#            speed_mu = 12,
+#            speed_sd = 2.5,
+#            return_mu = 42,
+#            maxtime_mu = 1,
+#            maxtime_sd = 0.5
+#          ), 
+#          sample_times = 1,
+#          bleed_times = c(0, 1, 5, 15, 30, 60),
+#          assay_error = 0.1,
+#          sm_span = 0.2)  
+#       
+# # Combine simulated and real data
+#     sim_kool$simulated_dataset_long$type <- "simulated"
+#      sim_kool2 <- sim_kool$simulated_dataset_long[, c("animal_sample", "time", "cort", "type")]
+#      kool2 <- sim_kool2[, c("animal_sample", "time", "cort")]
+#      kool2$type <- "simulated"
+#      colnames(kool2) <- c("animal_sample", "time", "cort", "type")
+#      
+#      kool <- kool[, c("animal", "time", "cort", "type")]
+#      colnames(kool)[1] <- "animal_sample"
+#      comp_kool <- rbind(kool, kool2)
      
-     
-     sim_rwd$simulated_dataset_long$type <- "simulated"
-     sim_rwd2 <- sim_rwd$simulated_dataset_long[, c("animal_sample", "time", "cort", "type")]
-     rwde2 <- rwde[, c("id", "lat_sec", "cort")]
-     rwde2$lat_sec <- rwde2$lat_sec / 60
-     rwde2$type <- "red-winged blackbird"
-     colnames(rwde2) <- c("animal_sample", "time", "cort", "type")
-     
-     comp_sim <- rbind(rwde2, sim_rwd2)
-     
-     p1 <- ggplot(comp_sim, mapping = aes(x = time, y = cort, by = animal_sample, color = type)) +
+# save the data to file and load back in
+     #saveRDS(comp_kool, here::here("5_other_outputs/comp_kool.rds"))
+     comp_kool <- readRDS(here::here("5_other_outputs/comp_kool.rds"))
+           
+# Plot the data
+    p1 <- ggplot(comp_kool, mapping = aes(x = time, y = cort, by = animal_sample, color = type)) +
        geom_line(alpha = 0.7, size = 0.7) +
        theme_classic() +
-       coord_cartesian(xlim = c(0, 60), ylim = c(0, 125)) +
-       xlab("Time (minutes)") + ylab("Corticosterone (ng/\U00B5l)") +
+       coord_cartesian(xlim = c(0, 60), ylim = c(0, 45)) +
+       xlab("Time (minutes)") + ylab("Corticosterone (\U00B5g/dl)") +
        scale_color_manual(values = c("slateblue", "orange")) +
-       guides(color = FALSE) +
+       guides(color = "none") +
        theme(axis.title = element_text(size = 14)) +
        annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A")
      
-     p2 <- ggplot(comp_sim, mapping = aes(x = time, y = cort, color = type, fill = type)) +
+     p2 <- ggplot(comp_kool, mapping = aes(x = time, y = cort, color = type, fill = type)) +
        geom_smooth() +
        theme_classic() + 
-       coord_cartesian(xlim = c(0, 60), ylim = c(0, 125)) +
-       xlab("Time (minutes)") + ylab("Corticosterone (ng/\U00B5l)") +
+       coord_cartesian(xlim = c(0, 60), ylim = c(0, 45)) +
+       xlab("Time (minutes)") + ylab("Corticosterone (\U00B5g/dl)") +
        scale_color_manual(values = c("slateblue", "orange")) +
        scale_fill_manual(values = c("slateblue", "orange")) +
        theme(legend.position = c(0.7, 0.15), axis.title = element_text(size = 14)) +
        guides(color = guide_legend(title = ""), fill = guide_legend(title = "")) +
        annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B")
 
-      ggpubr::ggarrange(p1, p2, nrow = 1) 
+      ggpubr::ggarrange(p1, p2, nrow = 1)  
 ```
+
+To demonstrate this utility, I have redrawn data from Koolhaas et al. [-@koolhaas2010]. As part of that study, a series of corticosterone measurements were collected during and after an acute stressor from 14 laboratory rats *Rattus norvegicus* using permanently implanted jugular vein canulae. I next simulated data using the functions described above starting with the input values calculated directly from the empirical data. The simulation creates a new dataset that has similar variation and patterns to the empirical data (Figure \@ref(fig:kool-demo)A) along with a population wide corticosterone response curve shape that closely matches the empirical data (Figure \@ref(fig:kool-demo)B). In this case, the plotted simulation data include the same number of animals sampled at the same time points as the empirical data, but these sampling points and total sample size can easily be changed as desired. The parameterized simulation can now be used to test the sensitivity of any number of experimental designs before additional data is collected.
 
 ### *Accurately measuring a single glucocorticoid trait*
 
@@ -306,8 +316,6 @@ pcor
 
 To illustrate this point, I explored the consequences of variation in the correlation between and relative amount of variation in just two aspects of the acute stress response: the maximum glucocorticoid level reached and the time required to reach the maximum level. For simplicity, I refer to the 'speed' of the response, but note that other aspects, such as the rate of initial increase, could also be considered as variation in the speed of response. When considering these two traits, a population of animals could plausibly display one of three patterns. Individuals that reach their maximum value faster might also reach higher values (figure \@ref(fig:cor-ex1)A; simulation correlation = -0.6). Alternatively, the speed and maximum values might vary independently (figure \@ref(fig:cor-ex1)B; correlation = 0). Finally, individuals that are faster might max out at lower glucocorticoid values (figure \@ref(fig:cor-ex1)C; correlation = 0.6). While many researchers in this field might have intuitions about which of these scenarios is most likely to prevail, there is very little empirical data available to actually determine which is most common. Moreover, regardless of the specifics for this particular correlation, the general pattern and considerations presented here will apply in similar ways to correlations between other aspects of the acute stress response.
 
-Using these three simulated populations as a starting point, I asked how well glucocorticoid values measured at one timepoint reflected true trait values. For each population I set an average population level speed of 30 minutes with other values in the simulation set at their default value. For every time point from 0 to 35 minutes I fit two simple linear regressions of the measured value on the true speed and maximum value and extracted the R^2^ value from the model. I repeated this simulation for all populations 50 times with 100 individuals sampled from the population each time. Finally, I repeated the entire set of simulations with each combination of low and high between-individual variation in the speed or maximum values (variation in speed: low = 2 minute SD, high = 12 minute SD; variation in maximum: low = 1ng/$\mu$l SD, high = 10ng/$\mu$l SD).
-
 ```{r cor-ex2, echo = FALSE, fig.height = 6, fig.width = 7, fig.pos = "!ht", fig.align = "center", message = FALSE, warning = FALSE, fig.cap = "Relationship between single time point measures of glucocorticoids and the true value of either maximum level (solid lines) or the speed of the glucocorticoid response (dashed lines). Panels show results when the overall variation in maximum values and speed are both low (A), when one is low while the other is high (B and C), and when both are high (D). In each panel, three different simulation scenarios illustrate the patterns when speed and maximum value are positively correlated (purple), uncorrelated (teal), or negatively correlated (yellow). Faded lines show the results from each of 50 separate simulation runs and thick lines are the averages across all runs."}
 
 # spd_sd <- c(2, 2, 12, 12)
@@ -431,6 +439,8 @@ Using these three simulated populations as a starting point, I asked how well gl
 p4 <- readRDS(here::here("5_other_outputs/example_corr2.rds"))
 p4 + theme(legend.position = "top")
 ```
+
+Using these three simulated populations as a starting point, I asked how well glucocorticoid values measured at one timepoint reflected true trait values. For each population I set an average population level speed of 30 minutes with other values in the simulation set at their default value. For every time point from 0 to 35 minutes I fit two simple linear regressions of the measured value on the true speed and maximum value and extracted the R^2^ value from the model. I repeated this simulation for all populations 50 times with 100 individuals sampled from the population each time. Finally, I repeated the entire set of simulations with each combination of low and high between-individual variation in the speed or maximum values (variation in speed: low = 2 minute SD, high = 12 minute SD; variation in maximum: low = 1ng/$\mu$l SD, high = 10ng/$\mu$l SD).
 
 The time that samples were taken at, relative amount of variation in speed and maximum, and degree of correlation between the speed and maximum all had substantial impacts on the ability to infer true trait values from single time point glucocorticoid measures (figure \@ref(fig:cor-ex2)). While these scenarios do not explore all possible parameter space, there are several clear conclusions that can be made. First, neither speed or maximum traits could be assessed accurately when between-individual variation in both traits was low (figure \@ref(fig:cor-ex2)A). This is potentially important for interpreting apparent differences in glucocorticoid fitness relationships because between-individual variation is known to differ across life history stages [CITE]. Second, accurately assessing variation in speed was much harder-if not impossible-with single measures. 
 
@@ -711,15 +721,15 @@ pAD
 
 Here, I imagine a simple scenario in which the 'true' maximum glucocorticoid level during an acute response explains 80% of the variation in fitness (clearly this is unrealistically high, but it is chosen for illustration only). I next construct a study in which researchers measure 50 individuals using a typical stress-induced (30 minute) sampling protocol. For simplicity, I set the other parameters in the simulation at their default values. Keeping the study design constant, I ask whether the glucocorticoid-fitness relationship can be recovered for two hypothetical populations that have low or high between-individual variation in maximum glucocorticoid levels. For each of these two populations, I ask how the ability to detect glucocorticoid-fitness relationships changes with different amounts of within-individual variation in acute response expression and with differing amounts of measurement error. For each combination of parameters, I simulated 50 populations and fit a simple linear regression model with observed glucocorticoid levels at 30 minutes as a predictor of fitness to ask whether the true glucocorticoid-fitness relationship was recovered. 
 
-Several patterns can be identified by examining the results of this simulation. First, the correlation between the true maximum glucorticoid value and fitness does not differ for populations simulated with high or low between-individual variation (figure \@ref(fig:fitness-ex) A-D). In all cases, however, the observed correlation is always lower than the true correlation and always lowest in the population with low between-individual variation. The ubquity of this pattern is a product of the simulation structure, because adding measurement error or within-individual variation effecively add noise to the true correlation. It is important to note that in the real world, it is unlikely that this pattern would be so universal, because unmeasured variables could influence both fitness and glucocorticoids. For example, if habitat quality directly alters fitness and glucocorticoids, the observed correlation could be stronger than the 'true' correlation. Thus, interpretation of these results should be made cautiosly in light of the simplicity of the simulation compared to real world conditions.
+Several patterns can be identified by examining the results of this simulation. First, the correlation between the true maximum glucocorticoid value and fitness does not differ for populations simulated with high or low between-individual variation (figure \@ref(fig:fitness-ex) A-D). In all cases, however, the observed correlation is always lower than the true correlation and always lowest in the population with low between-individual variation. The ubiquity of this pattern is a product of the simulation structure, because adding measurement error or within-individual variation effectively adds noise to the true correlation. It is important to note that in the real world, it is unlikely that this pattern would be so universal, because unmeasured variables could influence both fitness and glucocorticoids. For example, if habitat quality directly alters fitness and glucocorticoids, the observed correlation could be stronger than the 'true' correlation. Thus, interpretation of these results should be made cautiosly in light of the simplicity of the simulation compared to real world conditions.
 
 Nevertheless, general patterns illustrated by the simulation are likely to pertain across a wide range of conditions. In this case, it is easiest to detect significant glucocorticoid-fitness relationships when both measurement error and within-individual variation are low (figure \@ref(fig:fitness-ex) A). It becomes harder to detect these true relationships when either measurement error (figure \@ref(fig:fitness-ex) B) or within-individual variation (figure \@ref(fig:fitness-ex) C) are high, but even in these more challenging situations the relationship can be detected the majority of the time if between-individual variation in maximum levels is high. When both measurement error and within-individual variation are high, it is nearly impossible to detect glucocorticoid-fitness relationships with low-between individual variation, but in populations with high between-individual variation the relationship is still detected in about half of the simulations. 
 
-The fact that low between-individual variation in maximum glucocorticoids makes it harder to detect true glucocorticoid-fitness relationships across a wide range of conditions has important consequences for interpreting empirical results. 
+The fact that low between-individual variation in maximum glucocorticoids makes it harder to detect true glucocorticoid-fitness relationships across a wide range of conditions has important consequences for interpreting empirical results. Many studies have demonstrated different relationships (or lack thereof) between corticosterone and fitness at different life history stages [add our FEE & Bonier papers CITE], but it is also well known that the absolute amount of between individual variation in glucocorticoid traits varies considerably at different stages [CITE]. Our simulation demonstrates that the power to detect true relationships will differ drastically across these conditions even with similar study designs and samples sizes, suggesting that great care is needed to conclusively demonstrate different glucocorticoid-fitness relationships across contexts.
 
 ### *Designing optimal sampling strategies*
 
-One of the major benefits of simulating glucocorticoid response curves will be the ability to design optimal sampling strategies before data are collected. A simulation can be constrained to match any real world limitations (e.g., maximum number of samples possible per individual) and then explored to determine how to best allocate sampling resources. The specifics of this task will vary considerably with the study system and question being addressed, but here I illustrate one possible application. Consider an experiment in which the acute glucocorticoid response of a treatment group and control group are compared after some experimental manipulation. The details of the manipulation are unimportant here, but suppose that the prediction is that this manipulation should result in a difference in the speed of the corticosterone response between our two groups, such that the treatment group will reach it's maximum glucocorticoid value faster than the control group (figure \@ref(fig:prediction-ex)). 
+One of the major benefits of simulating glucocorticoid response curves will be the ability to design optimal sampling strategies before data are collected. A simulation can be constrained to match any real world limitations (e.g., maximum number of samples possible per individual) and then explored to determine how to best allocate sampling resources. The specifics of this task will vary considerably with the study system and question being addressed, but here I illustrate one possible application. Consider an experiment in which the acute glucocorticoid response of a treatment group and control group are compared after some experimental manipulation. The details of the manipulation are unimportant here, but suppose that the prediction is that this manipulation should result in a difference in the speed of the corticosterone response between our two groups, such that the treatment group will reach it's maximum glucocorticoid value faster than the control group, but will not differ in the maximum value itself (figure \@ref(fig:prediction-ex)). 
 
 For constraints, we can only sample a maximum of 20 individuals per group, we can only sample each individual once post-treatment, and during that single sampling event we can take a blood sample at a maximum of two different time points, resulting in a total of 40 data points per treatment group. Given these constraints, we can design a simulation to ask how well several different sampling schemes will perform in estimating the shape of the response curve for each group. I compare three different sampling designs: i) a study in which every animal is sampled at 1 minute and at 30 minutes, ii) a study in which two sampling times between 1 and 60 minutes are randomly chosen for every animal, iii) a study in which sampling times are randomly chosen for each animal, but weighted more heavily around 30 minutes, which is the expected average maximum glucocorticoid time. In the random sampling schemes, I constrain the randomization so that two samples from the same animal must be taken at least 5 minutes apart. To evaluate the performance of these sampling schemes, I simulated each one 50 times and fit a generalized additive model for each simulation with glucocorticoid level as the response and a treatment by smoothed time interaction as a predictor. Using the fit models, I asked how well each scheme estimated the time of maximum glucocorticoid and also how well the entire shape of the glucocorticoid response between 0 and 60 minutes was estimated.
 
@@ -727,7 +737,85 @@ For constraints, we can only sample a maximum of 20 individuals per group, we ca
 
 ```{r prediction-ex, echo = FALSE, fig.height = 8, fig.width = 8, fig.pos = "!ht", fig.align = "center", message = FALSE, warning = FALSE, fig.cap = "caption"}
 
-#plot(1,1)
+set.seed(295)
+
+# Simulate group A
+        sim_grpa <- cort_sim2(cort_sim1(
+       n = 20,
+       slope_mu = 9,
+       fastpct_mu = 0.7,
+       max_sd = 0.14,
+       speed_mu = 20,
+       speed_sd = 4
+     ), 
+     sample_times = 1,
+     sm_span = 0.2,
+     bleed_times = c(2, 30))         
+     
+# Simulate group B
+        sim_grpb <- cort_sim2(cort_sim1(
+       n = 20,
+       slope_mu = 11,
+       fastpct_mu = 0.55,
+       max_sd = 0.14,
+       speed_mu = 32,
+       speed_sd = 4
+     ), 
+     sample_times = 1,
+     sm_span = 0.2,
+     bleed_times = c(2, 30))      
+
+# Combine the two datasets
+      sim_grpa$timecourse_long$type <- "Treatment"
+      sim_a2 <- sim_grpa$timecourse_long[, c("animal_sample", "time", "cort", "type")]
+      sim_grpb$timecourse_long$type <- "Control"
+      sim_b2 <- sim_grpb$timecourse_long[, c("animal_sample", "time", "cort", "type")]
+     
+      comp_sim2 <- rbind(sim_a2, sim_b2)
+        
+     
+     p1 <- ggplot(comp_sim2, mapping = aes(x = time, y = cort, by = animal_sample, color = type)) +
+       geom_line(alpha = 0.3, size = 0.7) +
+       theme_classic() +
+       coord_cartesian(xlim = c(0, 60), ylim = c(0, 75)) +
+       xlab("Time (minutes)") + ylab("Corticosterone (ng/\U00B5l)") +
+       scale_color_manual(values = c("slateblue", "orange")) +
+       #guides(color = "none") +
+       theme(axis.title = element_text(size = 14)) +
+       annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A") +
+       geom_smooth(se = FALSE, size = 1.5, mapping = aes(by = type, color = type)) +
+       theme(legend.title = element_blank())
+     
+     
+      sim_grpa$true_values$type <- "Treatment"
+      sim_a22 <- sim_grpa$true_values[, c("baseline", "slope", "fastpct", "speed", "max", "atmax", "type")]
+      sim_grpb$true_values$type <- "Control"
+      sim_b22 <- sim_grpb$true_values[, c("baseline", "slope", "fastpct", "speed", "max", "atmax", "type")]
+     
+      comp_sim3 <- rbind(sim_a22, sim_b22)
+      comp_sim4 <- pivot_longer(comp_sim3, cols = c("baseline", "slope", "fastpct", "speed", "max", "atmax"), names_to = "trait", values_to = "value")
+     
+      ggplot(comp_sim4, mapping = aes(x = type, y = value, color = type, fill = type)) +
+        geom_boxplot(alpha = 0.5) +
+        scale_color_manual(values = c("slateblue", "orange")) +
+       scale_fill_manual(values = c("slateblue", "orange")) +
+        facet_wrap(~ trait, nrow = 1, scales = "free") +
+        xlab("") +
+        theme_bw() +
+        theme(axis.text.x = element_blank())
+      
+     p2 <- ggplot(comp_sim2, mapping = aes(x = time, y = cort, color = type, fill = type)) +
+       geom_smooth() +
+       theme_classic() + 
+       coord_cartesian(xlim = c(0, 60), ylim = c(0, 125)) +
+       xlab("Time (minutes)") + ylab("Corticosterone (ng/\U00B5l)") +
+       scale_color_manual(values = c("slateblue", "orange")) +
+       scale_fill_manual(values = c("slateblue", "orange")) +
+       theme(legend.position = c(0.7, 0.15), axis.title = element_text(size = 14)) +
+       guides(color = guide_legend(title = ""), fill = guide_legend(title = "")) +
+       annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "B")
+
+      ggpubr::ggarrange(p1, p2, nrow = 1) 
 
 ```
 
@@ -738,14 +826,6 @@ For constraints, we can only sample a maximum of 20 individuals per group, we ca
 
 This simulation is particular to the specific scenario, but a similar scenario could be designed for any number of studies and any number of predictions about how the speed, scope, or other attributes of the glucocorticoid response are expected to change with a treatment. Clearly, when estimating the timing of peak glucocorticoids, a simple baseline plus induced sampling scheme is sub optimal, but this scheme may be perform well in other situations where the maximum value is the target and there is relatively little variation in response time. Creating simulations like this before studies are conducted has the potential increase the efficient use of researches time and funds, but also forces researches to think explicitly about quantitative predictions ahead of time. These simulations could be included as part of a study pre-registration, grant application, or registered report to demonstrate exactly what data collection and analysis approaches are planned and to justify those decisions. 
 
-
-
-**Still working on thiis section. Will have two treatment groups with different response shapes and evaluate how well different sampling schemes recover those shapes.**
-
-### Repeatability?    
-
-The other example I had thought about including was something showing the repeatability functions and how repeatability of different measures might differ, but I'm leaning towards not including this since there is already a lot here.
-
 ## DISCUSSION 
 
 
@@ -753,6 +833,8 @@ The other example I had thought about including was something showing the repeat
 More sophisticated simulations that incorporate mechanistic processes or other molecules or components of stress response system. 
 
 Empirical data is so limited and hard to collect, that it makes sense to proceed with simulations to guide and focus empirical work and to determine whether empirical study designs actually have the ability in principle to support hypotheses of interest given reasonable effect sizes. 
+
+How to interpret some of the empirical studies that are published in light of simulations?
 
 More focus on measuring characteristics of the response other than just base/stress for all individuals. Group comparisons with treatments could look at shape changes.
 

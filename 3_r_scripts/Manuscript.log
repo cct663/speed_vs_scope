@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  26 JUL 2021 11:23
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  3 SEP 2021 11:55
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -777,15 +777,15 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <6> on input line 197.
 [6 <./Manuscript_files/figure-latex/initial-demo-1.pdf>]
-<Manuscript_files/figure-latex/rwbb-demo-1.pdf, id=65, 568.1225pt x 242.9075pt>
+<Manuscript_files/figure-latex/kool-demo-1.pdf, id=65, 568.1225pt x 242.9075pt>
 
-File: Manuscript_files/figure-latex/rwbb-demo-1.pdf Graphic file (type pdf)
-<use Manuscript_files/figure-latex/rwbb-demo-1.pdf>
-Package pdftex.def Info: Manuscript_files/figure-latex/rwbb-demo-1.pdf  used on
- input line 213.
+File: Manuscript_files/figure-latex/kool-demo-1.pdf Graphic file (type pdf)
+<use Manuscript_files/figure-latex/kool-demo-1.pdf>
+Package pdftex.def Info: Manuscript_files/figure-latex/kool-demo-1.pdf  used on
+ input line 211.
 (pdftex.def)             Requested size: 469.7731pt x 200.85704pt.
-[7] [8 <./Manuscript_files/figure-latex/rwbb-demo-1.pdf>]
-<Manuscript_files/figure-latex/max-sim-1.pdf, id=94, 566.115pt x 207.77625pt>
+[7 <./Manuscript_files/figure-latex/kool-demo-1.pdf>] [8]
+<Manuscript_files/figure-latex/max-sim-1.pdf, id=95, 566.115pt x 207.77625pt>
 File: Manuscript_files/figure-latex/max-sim-1.pdf Graphic file (type pdf)
 <use Manuscript_files/figure-latex/max-sim-1.pdf>
 Package pdftex.def Info: Manuscript_files/figure-latex/max-sim-1.pdf  used on i
@@ -794,54 +794,71 @@ nput line 226.
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <5> on input line 230.
 [9 <./Manuscript_files/figure-latex/max-sim-1.pdf>]
-<Manuscript_files/figure-latex/cor-ex1-1.pdf, id=109, 521.95pt x 193.72375pt>
+<Manuscript_files/figure-latex/cor-ex1-1.pdf, id=111, 521.95pt x 193.72375pt>
 File: Manuscript_files/figure-latex/cor-ex1-1.pdf Graphic file (type pdf)
 <use Manuscript_files/figure-latex/cor-ex1-1.pdf>
 Package pdftex.def Info: Manuscript_files/figure-latex/cor-ex1-1.pdf  used on i
 nput line 242.
 (pdftex.def)             Requested size: 469.75862pt x 174.3527pt.
 [10 <./Manuscript_files/figure-latex/cor-ex1-1.pdf>]
-<Manuscript_files/figure-latex/cor-ex2-1.pdf, id=132, 496.85625pt x 424.58624pt
+<Manuscript_files/figure-latex/cor-ex2-1.pdf, id=133, 496.85625pt x 424.58624pt
 >
 File: Manuscript_files/figure-latex/cor-ex2-1.pdf Graphic file (type pdf)
 <use Manuscript_files/figure-latex/cor-ex2-1.pdf>
 Package pdftex.def Info: Manuscript_files/figure-latex/cor-ex2-1.pdf  used on i
-nput line 255.
+nput line 253.
 (pdftex.def)             Requested size: 469.75908pt x 401.43048pt.
-[11]
-<Manuscript_files/figure-latex/fitness-ex-1.pdf, id=148, 575.14874pt x 573.1412
+[11 <./Manuscript_files/figure-latex/cor-ex2-1.pdf>]
+<Manuscript_files/figure-latex/fitness-ex-1.pdf, id=157, 575.14874pt x 573.1412
 5pt>
 File: Manuscript_files/figure-latex/fitness-ex-1.pdf Graphic file (type pdf)
 <use Manuscript_files/figure-latex/fitness-ex-1.pdf>
 Package pdftex.def Info: Manuscript_files/figure-latex/fitness-ex-1.pdf  used o
 n input line 273.
 (pdftex.def)             Requested size: 469.7645pt x 468.12483pt.
-[12 <./Manuscript_files/figure-latex/cor-ex2-1.pdf>] [13 <./Manuscript_files/fi
-gure-latex/fitness-ex-1.pdf>]
+[12] [13 <./Manuscript_files/figure-latex/fitness-ex-1.pdf>]
 
 LaTeX Warning: Reference `fig:prediction-ex' on page 14 undefined on input line
  291.
 
-[14] [15] [16] [17]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 417.
-[18]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 417.
+[14]
+<Manuscript_files/figure-latex/prediction-ex-1.pdf, id=194, 562.1pt x 555.07375
+pt>
+File: Manuscript_files/figure-latex/prediction-ex-1.pdf Graphic file (type pdf)
+
+<use Manuscript_files/figure-latex/prediction-ex-1.pdf>
+Package pdftex.def Info: Manuscript_files/figure-latex/prediction-ex-1.pdf  use
+d on input line 297.
+(pdftex.def)             Requested size: 469.75067pt x 463.87875pt.
+<Manuscript_files/figure-latex/prediction-ex-2.pdf, id=195, 568.1225pt x 568.12
+25pt>
+File: Manuscript_files/figure-latex/prediction-ex-2.pdf Graphic file (type pdf)
+
+<use Manuscript_files/figure-latex/prediction-ex-2.pdf>
+Package pdftex.def Info: Manuscript_files/figure-latex/prediction-ex-2.pdf  use
+d on input line 305.
+(pdftex.def)             Requested size: 469.7731pt x 469.7731pt.
+[15] [16 <./Manuscript_files/figure-latex/prediction-ex-1.pdf>] [17 <./Manuscri
+pt_files/figure-latex/prediction-ex-2.pdf>] [18] [19]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 432.
+[20]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 432.
 (./Manuscript.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 417.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 417.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 432.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 432.
 
 LaTeX Warning: There were undefined references.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 417.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 432.
  ) 
 Here is how much of TeX's memory you used:
- 15046 strings out of 492649
- 223490 string characters out of 6129622
- 342940 words of memory out of 5000000
- 18472 multiletter control sequences out of 15000+600000
- 72801 words of font info for 137 fonts, out of 8000000 for 9000
+ 15062 strings out of 492649
+ 224109 string characters out of 6129622
+ 343060 words of memory out of 5000000
+ 18482 multiletter control sequences out of 15000+600000
+ 75789 words of font info for 138 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 37i,6n,41p,2081b,368s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 37i,6n,41p,2072b,368s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/lo
 cal/texlive/2018/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texlive/20
 18/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}</usr/local/texlive/2018/texmf-dist/
@@ -855,10 +872,10 @@ f-dist/fonts/type1/public/lm/lmr7.pfb></usr/local/texlive/2018/texmf-dist/fonts
 /type1/public/lm/lmr8.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/publi
 c/lm/lmri12.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/lm/lmtt1
 2.pfb>
-Output written on Manuscript.pdf (18 pages, 913052 bytes).
+Output written on Manuscript.pdf (20 pages, 956258 bytes).
 PDF statistics:
- 347 PDF objects out of 1000 (max. 8388607)
- 293 compressed objects within 3 object streams
- 82 named destinations out of 1000 (max. 500000)
- 14476 words of extra memory for PDF output out of 17280 (max. 10000000)
+ 381 PDF objects out of 1000 (max. 8388607)
+ 318 compressed objects within 4 object streams
+ 85 named destinations out of 1000 (max. 500000)
+ 14478 words of extra memory for PDF output out of 17280 (max. 10000000)
 
