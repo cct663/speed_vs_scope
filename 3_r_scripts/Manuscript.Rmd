@@ -792,7 +792,7 @@ One of the major benefits of simulating glucocorticoid response curves will be t
        theme_classic() +
        coord_cartesian(xlim = c(0, 60), ylim = c(0, 75)) +
        xlab("Time (minutes)") + ylab("Corticosterone (ng/\U00B5l)") +
-       scale_color_manual(values = c("slateblue", "orange")) +
+       scale_color_manual(values = c("#9D93DE", "#FDAE42")) +
        #guides(color = "none") +
        theme(axis.title = element_text(size = 14)) +
        annotate(geom = "text", x = -Inf, y = Inf, hjust = -.5, vjust = 1.5, label = "A") +
